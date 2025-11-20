@@ -74,15 +74,11 @@ export default function OnboardingFlow() {
                 description: 'Your field has been registered successfully.',
             });
 
-            // Mark onboarding as complete in Supabase
-            const { supabase } = await import('@/lib/supabase');
-            await supabase.auth.updateUser({
-                data: { onboarding_complete: true }
-            });
+            // Mark onboarding as complete
+            await supabaseAuthService.completeOnboarding();
             
-            // Force navigation and reload to ensure state updates
+            // Navigate to dashboard
             navigate('/dashboard', { replace: true });
-            window.location.reload();
         } catch (error) {
             console.error('Error creating field:', error);
             toast({
@@ -96,20 +92,16 @@ export default function OnboardingFlow() {
     };
 
     const handleSkip = async () => {
-        // Mark onboarding as complete in Supabase
-        const { supabase } = await import('@/lib/supabase');
-        await supabase.auth.updateUser({
-            data: { onboarding_complete: true }
-        });
+        // Mark onboarding as complete
+        await supabaseAuthService.completeOnboarding();
         
         toast({
             title: 'Skipped',
             description: 'You can add fields later from the dashboard.',
         });
         
-        // Force navigation and reload to ensure state updates
+        // Navigate to dashboard
         navigate('/dashboard', { replace: true });
-        window.location.reload();
     };
 
     return (

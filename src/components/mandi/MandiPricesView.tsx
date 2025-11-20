@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Search, MapPin, Calendar, IndianRupee, RefreshCw, ArrowLeft, TrendingDown, Sparkles, Filter, X, Navigation, Clock, Fuel, BarChart3 } from 'lucide-react';
+import { TrendingUp, Search, MapPin, Calendar, IndianRupee, RefreshCw, ArrowLeft, TrendingDown, Sparkles, Filter, X, Navigation, Clock, Fuel, BarChart3, Phone, Share2, Star, Bell, Zap } from 'lucide-react';
 import { mandiPriceService, MandiPrice } from '../../lib/mandiPriceService';
-import { mandiPriceHistoryService } from '../../lib/mandiPriceHistoryService';
 import { MandiPriceCharts } from './MandiPriceCharts';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +27,9 @@ export const MandiPricesView: React.FC = () => {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 });
   const [fuelCostPerKm] = useState(8); // ₹8 per km average
   const [showCharts, setShowCharts] = useState(false);
+  const [quickFilter, setQuickFilter] = useState<'all' | 'nearby' | 'best' | 'new'>('all');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'compare'>('grid');
 
   useEffect(() => {
     loadInitialData();
@@ -44,18 +46,38 @@ export const MandiPricesView: React.FC = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [allPrices, selectedCommodity, selectedState, selectedVariety, searchTerm, priceRange, sortByDistance, userLocation]);
+  }, [allPrices, selectedCommodity, selectedState, selectedVariety, searchTerm, priceRange, sortByDistance, userLocation, quickFilter]);
+
+  useEffect(() => {
+    // Load favorites from localStorage
+    const saved = localStorage.getItem('mandi_favorites');
+    if (saved) {
+      setFavorites(new Set(JSON.parse(saved)));
+    }
+  }, []);
 
   useEffect(() => {
     if (filteredPrices.length > 0) {
-      const modalPrices = filteredPrices.map(p => p.modal_price).filter(p => p > 0);
+      // Filter valid prices (positive, finite numbers)
+      const modalPrices = filteredPrices
+        .map(p => p.modal_price)
+        .filter(p => p > 0 && isFinite(p) && !isNaN(p));
+      
       if (modalPrices.length > 0) {
+        const sum = modalPrices.reduce((a, b) => a + b, 0);
+        const avg = sum / modalPrices.length;
+        
         setPriceStats({
           highest: Math.max(...modalPrices),
           lowest: Math.min(...modalPrices),
-          average: Math.round(modalPrices.reduce((a, b) => a + b, 0) / modalPrices.length)
+          average: Math.round(avg)
         });
+      } else {
+        // Fallback to safe defaults
+        setPriceStats({ highest: 0, lowest: 0, average: 0 });
       }
+    } else {
+      setPriceStats({ highest: 0, lowest: 0, average: 0 });
     }
   }, [filteredPrices]);
 
@@ -120,6 +142,17 @@ export const MandiPricesView: React.FC = () => {
   const applyFilters = async () => {
     let filtered = [...allPrices];
 
+    // Apply quick filters first
+    if (quickFilter === 'nearby' && userLocation) {
+      filtered = await mandiPriceService.sortByLocation(filtered, userLocation.lat, userLocation.lon);
+      filtered = filtered.filter(p => p.distance !== undefined && p.distance < 50);
+    } else if (quickFilter === 'best') {
+      filtered = filtered.filter(p => p.modal_price >= priceStats.highest * 0.9);
+    } else if (quickFilter === 'new') {
+      const today = new Date().toISOString().split('T')[0];
+      filtered = filtered.filter(p => p.arrival_date === today);
+    }
+
     // Apply state filter
     if (selectedState) {
       filtered = filtered.filter(p => p.state === selectedState);
@@ -144,20 +177,57 @@ export const MandiPricesView: React.FC = () => {
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(p =>
-        p.commodity.toLowerCase().includes(search) ||
-        p.variety.toLowerCase().includes(search) ||
-        p.market.toLowerCase().includes(search) ||
-        p.district.toLowerCase().includes(search) ||
-        p.state.toLowerCase().includes(search)
+        p.commodity?.toLowerCase().includes(search) ||
+        p.variety?.toLowerCase().includes(search) ||
+        p.market?.toLowerCase().includes(search) ||
+        p.district?.toLowerCase().includes(search) ||
+        p.state?.toLowerCase().includes(search)
       );
     }
 
-    // Sort by distance if enabled
-    if (sortByDistance && userLocation) {
+    // Sort by distance if enabled (and not already sorted by quick filter)
+    if (sortByDistance && userLocation && quickFilter !== 'nearby') {
       filtered = await mandiPriceService.sortByLocation(filtered, userLocation.lat, userLocation.lon);
     }
 
     setFilteredPrices(filtered);
+  };
+
+  const toggleFavorite = (priceId: string) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(priceId)) {
+      newFavorites.delete(priceId);
+    } else {
+      newFavorites.add(priceId);
+    }
+    setFavorites(newFavorites);
+    // Save to localStorage
+    localStorage.setItem('mandi_favorites', JSON.stringify(Array.from(newFavorites)));
+  };
+
+  const callMandi = (market: string) => {
+    // In production, this would have actual mandi phone numbers
+    alert(`Calling ${market}...\n\nPhone numbers will be available soon!`);
+  };
+
+  const getDirections = (market: string, district: string, state: string) => {
+    const query = encodeURIComponent(`${market}, ${district}, ${state}`);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+  };
+
+  const sharePrice = (price: MandiPrice) => {
+    const text = `${price.commodity} (${price.variety}) - ₹${price.modal_price}/${price.unit}\n${price.market}, ${price.district}\nDate: ${new Date(price.arrival_date).toLocaleDateString('en-IN')}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Mandi Price',
+        text: text,
+      }).catch(() => {});
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(text);
+      alert('Price copied to clipboard!');
+    }
   };
 
   const handleRefresh = async () => {
@@ -192,9 +262,33 @@ export const MandiPricesView: React.FC = () => {
     return Math.round(distance * fuelCostPerKm * 2); // Round trip
   };
 
+  const calculateNetProfit = (price: number, transportCost: number | null, unit: string) => {
+    if (!transportCost) return null;
+    
+    // Assume 1 quintal (100kg) for calculation
+    const quantityInQuintals = unit.toLowerCase().includes('quintal') ? 1 : 
+                               unit.toLowerCase().includes('kg') ? 0.01 : 1;
+    
+    const grossRevenue = price * quantityInQuintals;
+    const netProfit = grossRevenue - transportCost;
+    const profitPercentage = ((netProfit / grossRevenue) * 100).toFixed(1);
+    
+    return {
+      netProfit: Math.round(netProfit),
+      profitPercentage: parseFloat(profitPercentage)
+    };
+  };
+
+  const getProfitIndicator = (profitPercentage: number) => {
+    if (profitPercentage >= 90) return { text: '🔥 Excellent', color: 'text-green-600', bg: 'bg-green-50' };
+    if (profitPercentage >= 80) return { text: '✅ Good', color: 'text-blue-600', bg: 'bg-blue-50' };
+    if (profitPercentage >= 70) return { text: '⚠️ Fair', color: 'text-yellow-600', bg: 'bg-yellow-50' };
+    return { text: '❌ Low', color: 'text-red-600', bg: 'bg-red-50' };
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 pb-20">
-      {/* Sticky Header - FIXED */}
+      {/* Sticky Header - IMPROVED */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg shadow-lg border-b border-green-100">
         <div className="p-4">
           {/* Top Bar */}
@@ -206,32 +300,107 @@ export const MandiPricesView: React.FC = () => {
               <ArrowLeft className="w-6 h-6 text-gray-700" />
             </button>
             <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg animate-pulse">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    {t('mandiPrices') || 'Mandi Prices'}
-                    <Sparkles className="w-4 h-4 text-yellow-500 animate-bounce" />
-                  </h1>
-                  <p className="text-xs text-gray-600">
-                    {filteredPrices.length} markets • Live prices
-                  </p>
-                </div>
-              </div>
+              <h1 className="text-xl font-bold text-gray-800">
+                {t('mandiPrices') || 'Mandi Prices'}
+              </h1>
+              <p className="text-xs text-gray-600">
+                {filteredPrices.length} markets • Updated {lastUpdateTime ? new Date(lastUpdateTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'now'}
+              </p>
             </div>
             <button
-              onClick={() => setShowCharts(!showCharts)}
-              className={`p-2 rounded-lg transition-all active:scale-95 ${showCharts ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'}`}
+              onClick={handleRefresh}
+              disabled={loading}
+              className="p-2 hover:bg-green-50 rounded-lg transition-all active:scale-95"
             >
-              <BarChart3 className="w-5 h-5" />
+              <RefreshCw className={`w-5 h-5 text-gray-700 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`p-2 rounded-lg transition-all active:scale-95 ${hasActiveFilters ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'}`}
             >
               <Filter className={`w-5 h-5 ${showFilters ? 'rotate-180' : ''} transition-transform`} />
+            </button>
+          </div>
+
+          {/* Search Bar - Always Visible */}
+          <div className="mb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search crops, markets, districts..."
+                className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Filters - Always Visible */}
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              onClick={() => setQuickFilter('all')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                quickFilter === 'all'
+                  ? 'bg-green-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">All</span>
+            </button>
+            <button
+              onClick={() => setQuickFilter('nearby')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                quickFilter === 'nearby'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              disabled={!userLocation}
+            >
+              <Navigation className="w-4 h-4" />
+              <span className="text-sm font-medium">Nearby</span>
+            </button>
+            <button
+              onClick={() => setQuickFilter('best')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                quickFilter === 'best'
+                  ? 'bg-green-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-medium">Best Price</span>
+            </button>
+            <button
+              onClick={() => setQuickFilter('new')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                quickFilter === 'new'
+                  ? 'bg-orange-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              <span className="text-sm font-medium">New Today</span>
+            </button>
+            <button
+              onClick={() => setShowCharts(!showCharts)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                showCharts
+                  ? 'bg-purple-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="text-sm font-medium">Charts</span>
             </button>
           </div>
 
@@ -405,6 +574,46 @@ export const MandiPricesView: React.FC = () => {
 
       {/* Main Content */}
       <div className="p-4">
+        {/* Smart Recommendation Banner */}
+        {filteredPrices.length > 0 && priceStats.highest > 0 && (
+          (() => {
+            const bestDeals = filteredPrices
+              .filter(p => p.modal_price >= priceStats.highest * 0.95)
+              .filter(p => p.distance !== undefined && p.distance < 50)
+              .slice(0, 1);
+            
+            if (bestDeals.length > 0 && quickFilter !== 'best') {
+              const deal = bestDeals[0];
+              return (
+                <div className="mb-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg animate-slide-in-up">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-lg mb-1">💡 Best Deal Nearby!</p>
+                      <p className="text-white/90 text-sm mb-2">
+                        {deal.commodity} at ₹{deal.modal_price}/{deal.unit} in {deal.market}
+                      </p>
+                      <p className="text-white/80 text-xs">
+                        {deal.distance && `${Math.round(deal.distance)}km away • `}
+                        {deal.modal_price >= priceStats.highest * 0.95 && 'Top 5% price in market'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setQuickFilter('best')}
+                      className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg text-sm font-medium transition-all active:scale-95"
+                    >
+                      View All
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()
+        )}
+
         {/* Price Charts Section */}
         {showCharts && (
           <div className="mb-6 animate-slide-in-up">
@@ -458,21 +667,21 @@ export const MandiPricesView: React.FC = () => {
               const trend = getPriceTrend(price.modal_price);
               const TrendIcon = trend.icon;
               const transportCost = calculateTransportCost(price.distance);
+              const priceId = `${price.market}_${price.commodity}_${price.variety}`;
+              const isFavorite = favorites.has(priceId);
               
               return (
                 <div 
                   key={index} 
-                  className="mandi-card animate-slide-in-up group bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden"
+                  className="mandi-card animate-slide-in-up group bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  {/* Card Header with Gradient and Crop Image */}
-                  <div className="bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 p-4 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-                    <div className="relative flex items-start justify-between">
+                  {/* Card Header - Simplified */}
+                  <div className="bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 p-4 relative">
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 flex-1">
                         {price.cropImage && (
-                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                          <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl p-2 flex items-center justify-center flex-shrink-0">
                             <img 
                               src={price.cropImage} 
                               alt={price.commodity}
@@ -484,90 +693,138 @@ export const MandiPricesView: React.FC = () => {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-white mb-1 truncate">{price.commodity}</h3>
+                          <h3 className="text-lg font-bold text-white mb-0.5 truncate">{price.commodity}</h3>
                           <p className="text-sm text-white/90 truncate">{price.variety}</p>
-                          {price.distance !== undefined && price.distance < 9999 && (
-                            <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full">
-                              <Navigation className="w-3 h-3 text-white" />
-                              <span className="text-xs text-white font-medium">{Math.round(price.distance)} km</span>
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg flex-shrink-0">
-                        <TrendIcon className="w-5 h-5 text-white" />
+                      <button
+                        onClick={() => toggleFavorite(priceId)}
+                        className="p-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all active:scale-95"
+                      >
+                        <Star className={`w-5 h-5 ${isFavorite ? 'fill-yellow-300 text-yellow-300' : 'text-white'}`} />
+                      </button>
+                    </div>
+
+                    {/* Prominent Price Display */}
+                    <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                      <div className="text-center mb-3">
+                        <p className="text-white/80 text-xs font-medium mb-1">Market Price</p>
+                        <p className="text-4xl font-bold text-white mb-1">₹{price.modal_price}</p>
+                        <p className="text-white/90 text-sm">per {price.unit}</p>
                       </div>
+                      {/* Per KG Price if unit is quintal */}
+                      {price.unit.toLowerCase().includes('quintal') && (
+                        <div className="pt-3 border-t border-white/20 text-center">
+                          <p className="text-white/70 text-xs mb-0.5">Per Kg</p>
+                          <p className="text-xl font-bold text-white">₹{Math.round(price.modal_price / 100)}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Card Body */}
-                  <div className="p-5">
-                    {/* Price Grid */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <div className="bg-red-50 rounded-lg p-2 text-center">
-                        <p className="text-xs text-red-600 font-medium mb-1">Min</p>
-                        <p className="text-sm font-bold text-red-700">₹{price.min_price}</p>
+                  <div className="p-4">
+                    {/* Location & Distance */}
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
+                        <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium truncate">{price.market}, {price.district}</span>
                       </div>
-                      <div className="bg-blue-50 rounded-lg p-2 text-center ring-2 ring-blue-200">
-                        <p className="text-xs text-blue-600 font-medium mb-1">Modal</p>
-                        <p className={`text-sm font-bold ${getPriceColor(price.modal_price)}`}>₹{price.modal_price}</p>
-                      </div>
-                      <div className="bg-green-50 rounded-lg p-2 text-center">
-                        <p className="text-xs text-green-600 font-medium mb-1">Max</p>
-                        <p className="text-sm font-bold text-green-700">₹{price.max_price}</p>
-                      </div>
+                      {price.distance !== undefined && price.distance < 9999 && transportCost && (
+                        <>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                            <Navigation className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span>{Math.round(price.distance)} km away</span>
+                            <span className="ml-auto text-orange-600 font-medium">₹{transportCost} transport</span>
+                          </div>
+                          {(() => {
+                            const netProfit = calculateNetProfit(price.modal_price, transportCost, price.unit);
+                            if (netProfit) {
+                              const indicator = getProfitIndicator(netProfit.profitPercentage);
+                              const perKgProfit = price.unit.toLowerCase().includes('quintal') 
+                                ? Math.round(netProfit.netProfit / 100) 
+                                : netProfit.netProfit;
+                              
+                              return (
+                                <div className={`p-3 rounded-lg ${indicator.bg} border-2 ${indicator.color.replace('text-', 'border-')}`}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <IndianRupee className={`w-4 h-4 ${indicator.color}`} />
+                                      <span className={`text-xs font-medium ${indicator.color}`}>Net Profit</span>
+                                    </div>
+                                    <span className={`text-xs font-bold ${indicator.color} px-2 py-0.5 rounded-full bg-white/50`}>
+                                      {indicator.text}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="text-center p-2 bg-white/50 rounded">
+                                      <p className={`text-xs ${indicator.color} mb-0.5`}>Per {price.unit}</p>
+                                      <p className={`text-lg font-bold ${indicator.color}`}>₹{netProfit.netProfit}</p>
+                                    </div>
+                                    {price.unit.toLowerCase().includes('quintal') && (
+                                      <div className="text-center p-2 bg-white/50 rounded">
+                                        <p className={`text-xs ${indicator.color} mb-0.5`}>Per Kg</p>
+                                        <p className={`text-lg font-bold ${indicator.color}`}>₹{perKgProfit}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </>
+                      )}
                     </div>
 
-                    <div className="text-center mb-4">
-                      <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-700">
-                        per {price.unit}
-                      </span>
-                    </div>
-
-                    {/* Transport Cost */}
-                    {transportCost && (
-                      <div className="mb-4 flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Fuel className="w-4 h-4 text-orange-600" />
-                          <span className="text-xs text-orange-700 font-medium">Transport Cost</span>
-                        </div>
-                        <span className="text-sm font-bold text-orange-600">₹{transportCost}</span>
+                    {/* Price Range (Compact) */}
+                    <div className="flex items-center justify-between mb-3 p-2 bg-gray-50 rounded-lg text-xs">
+                      <div className="text-center">
+                        <p className="text-gray-500 mb-0.5">Min</p>
+                        <p className="font-bold text-red-600">₹{price.min_price}</p>
                       </div>
-                    )}
-
-                    {/* Location & Date */}
-                    <div className="space-y-2 pt-4 border-t border-gray-100">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <div className="p-1.5 bg-blue-50 rounded">
-                          <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                        </div>
-                        <span className="flex-1 truncate">{price.market}, {price.district}</span>
+                      <div className="text-center">
+                        <p className="text-gray-500 mb-0.5">Max</p>
+                        <p className="font-bold text-green-600">₹{price.max_price}</p>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <div className="p-1.5 bg-purple-50 rounded">
-                          <Calendar className="w-3.5 h-3.5 text-purple-600" />
-                        </div>
-                        <span>{new Date(price.arrival_date).toLocaleDateString('en-IN', { 
-                          day: 'numeric', 
-                          month: 'short', 
-                          year: 'numeric' 
-                        })}</span>
+                      <div className="text-center">
+                        <p className="text-gray-500 mb-0.5">Date</p>
+                        <p className="font-bold text-gray-700">{new Date(price.arrival_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
                       </div>
                     </div>
 
                     {/* Price Indicator */}
                     {price.modal_price >= priceStats.highest * 0.9 && (
-                      <div className="price-indicator mt-3 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                        <TrendingUp className="w-4 h-4 text-green-600 animate-bounce" />
-                        <span className="text-xs font-bold text-green-700">🎯 Best Price!</span>
+                      <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                        <TrendingUp className="w-4 h-4 text-green-600" />
+                        <span className="text-xs font-bold text-green-700">🎯 Best Price in Market!</span>
                       </div>
                     )}
-                    {price.modal_price <= priceStats.lowest * 1.1 && (
-                      <div className="price-indicator mt-3 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-200">
-                        <TrendingDown className="w-4 h-4 text-red-600" />
-                        <span className="text-xs font-bold text-red-700">⚠️ Lower Price</span>
-                      </div>
-                    )}
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => callMandi(price.market)}
+                        className="flex flex-col items-center gap-1 p-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all active:scale-95"
+                      >
+                        <Phone className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs font-medium text-blue-700">Call</span>
+                      </button>
+                      <button
+                        onClick={() => getDirections(price.market, price.district, price.state)}
+                        className="flex flex-col items-center gap-1 p-2 bg-green-50 hover:bg-green-100 rounded-lg transition-all active:scale-95"
+                      >
+                        <MapPin className="w-4 h-4 text-green-600" />
+                        <span className="text-xs font-medium text-green-700">Directions</span>
+                      </button>
+                      <button
+                        onClick={() => sharePrice(price)}
+                        className="flex flex-col items-center gap-1 p-2 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all active:scale-95"
+                      >
+                        <Share2 className="w-4 h-4 text-purple-600" />
+                        <span className="text-xs font-medium text-purple-700">Share</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

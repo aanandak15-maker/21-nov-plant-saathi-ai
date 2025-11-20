@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { ArrowLeft, Volume2, Camera, TrendingUp, MapPin } from "lucide-react";
+import { ArrowLeft, Volume2, Camera, TrendingUp, MapPin, Brain, Target, Calendar, AlertTriangle, Sparkles, Package, Leaf } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { VegetationIndicesGrid } from "./VegetationIndicesGrid";
@@ -20,6 +20,7 @@ import { audioService } from "@/lib/audioService";
 import { blackBoxService } from "@/lib/blackBoxService";
 import { useToast } from "@/hooks/use-toast";
 import { fieldDataCacheService } from "@/lib/fieldDataCacheService";
+import { aiOrchestrator, type FieldStrategy } from "@/lib/aiOrchestrator";
 
 // Mock data removed - now using real field data from localStorage and satellite APIs
 
@@ -37,6 +38,23 @@ export const FieldDetailsDashboard = () => {
     valid: false, 
     timeRemaining: null 
   });
+  const [aiStrategy, setAiStrategy] = useState<FieldStrategy | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+
+  // Load AI Strategy
+  const loadAIStrategy = async () => {
+    if (!fieldId) return;
+    
+    setLoadingAI(true);
+    try {
+      const strategy = await aiOrchestrator.getFieldStrategy(fieldId, 'current_user');
+      setAiStrategy(strategy);
+    } catch (error) {
+      console.error('Failed to load AI strategy:', error);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
 
   // Load field data from Supabase and check cache
   useEffect(() => {
@@ -142,6 +160,13 @@ export const FieldDetailsDashboard = () => {
       loadFieldData();
     }
   }, [fieldId, navigate, toast]);
+
+  // Load AI Strategy when field data is available
+  useEffect(() => {
+    if (fieldData && fieldId) {
+      loadAIStrategy();
+    }
+  }, [fieldData, fieldId]);
 
   const calculateExpectedHarvest = (sowingDate: string, cropType: string) => {
     try {
@@ -397,13 +422,30 @@ export const FieldDetailsDashboard = () => {
           {t('my_fields_back')}
         </Button>
         <div className="flex items-start justify-between">
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold mb-1">{field.name}</h1>
             <p className="text-sm opacity-90">🌾 {field.cropType} ({field.variety})</p>
           </div>
-          <Badge className="bg-white/20 text-white">
-            {field.area} hectares
-          </Badge>
+          <div className="flex flex-col gap-2 items-end">
+            <Badge className="bg-white/20 text-white">
+              {field.area} hectares
+            </Badge>
+            {/* Field Status Indicator - Farmer Friendly */}
+            {(!field.status || field.status === 'active') ? (
+              <div className="bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg">
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                सक्रिय / ACTIVE
+              </div>
+            ) : field.status === 'harvested' ? (
+              <div className="bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg">
+                🌾 कट गई / HARVESTED
+              </div>
+            ) : (
+              <div className="bg-gray-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg">
+                📦 इतिहास / HISTORY
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -474,6 +516,106 @@ export const FieldDetailsDashboard = () => {
             </Button>
           </div>
         </Card>
+
+        {/* AI Strategy Card */}
+        {aiStrategy && !loadingAI && (
+          <Card className="p-5 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 shadow-lg mt-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-purple-600 rounded-lg">
+                <Brain className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg">🤖 AI Farming Strategy</h3>
+                <p className="text-xs text-muted-foreground">{aiStrategy.confidence}% Confidence</p>
+              </div>
+            </div>
+
+            {/* Recommendation */}
+            <div className="bg-white/80 rounded-lg p-3 mb-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <span className="text-xs font-medium text-muted-foreground">Recommended</span>
+              </div>
+              <p className="text-xl font-bold text-purple-900">{aiStrategy.recommendation.crop}</p>
+              <p className="text-sm text-gray-700 mt-1">{aiStrategy.recommendation.reason}</p>
+            </div>
+
+            {/* Profit Metrics */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="bg-white/80 rounded-lg p-3">
+                <div className="flex items-center gap-1 mb-1">
+                  <Target className="w-3 h-3 text-green-600" />
+                  <span className="text-xs text-muted-foreground">Profit</span>
+                </div>
+                <p className="text-lg font-bold text-green-700">₹{(aiStrategy.profitAnalysis.netProfit / 1000).toFixed(0)}K</p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-3">
+                <div className="flex items-center gap-1 mb-1">
+                  <TrendingUp className="w-3 h-3 text-blue-600" />
+                  <span className="text-xs text-muted-foreground">ROI</span>
+                </div>
+                <p className="text-lg font-bold text-blue-700">{aiStrategy.profitAnalysis.roi.toFixed(0)}%</p>
+              </div>
+            </div>
+
+            {/* Next Actions */}
+            <div className="bg-white/80 rounded-lg p-3 mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="w-4 h-4 text-purple-600" />
+                <span className="text-sm font-semibold">Next Actions</span>
+              </div>
+              <div className="space-y-2">
+                {aiStrategy.actions.slice(0, 2).map((action, idx) => {
+                  const iconMap: Record<string, string> = {
+                    planting: '🌱',
+                    irrigation: '💧',
+                    fertilizer: '🧪',
+                    pest: '🦟',
+                    harvest: '🌾',
+                    selling: '💰'
+                  };
+                  return (
+                    <div key={idx} className="flex items-start gap-2 text-sm">
+                      <span>{iconMap[action.category] || '📋'}</span>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{action.title}</p>
+                        <p className="text-xs text-gray-600">{action.deadline || 'Soon'}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Risk Alert */}
+            {aiStrategy.risks.factors.length > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm font-semibold text-orange-900">Risk Awareness</span>
+                </div>
+                <p className="text-xs text-orange-800">
+                  {aiStrategy.risks.factors[0].description} → {aiStrategy.risks.factors[0].mitigation}
+                </p>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Loading AI Strategy */}
+        {loadingAI && (
+          <Card className="p-5 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 mt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-600 rounded-lg">
+                <Brain className="w-6 h-6 text-white animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-bold">🤖 Analyzing Field...</h3>
+                <p className="text-xs text-muted-foreground">AI is processing your field data</p>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Fetch Satellite Data Button */}
@@ -620,6 +762,82 @@ export const FieldDetailsDashboard = () => {
           <Camera className="w-4 h-4 mr-2" />
           {t('diagnose_plant_disease')}
         </Button>
+
+        {/* Harvest Complete Button - Farmer Friendly */}
+        {(!field.status || field.status === 'active') && (
+          <Button
+            onClick={async () => {
+              if (confirm(`फसल कट गई है? / Crop Harvested?\n\n"${field.name}"\n\n✅ खेत इतिहास में चला जाएगा / Field will move to history\n✅ रोज़ की निगरानी बंद हो जाएगी / Daily monitoring will stop\n✅ आप कभी भी नई फसल के लिए फिर से शुरू कर सकते हैं / You can restart anytime for new crop\n\nक्या आप निश्चित हैं? / Are you sure?`)) {
+                try {
+                  const { fieldLifecycleService } = await import('@/lib/fieldLifecycleService');
+                  await fieldLifecycleService.confirmHarvest(fieldId || field.id, {
+                    notes: 'Farmer marked crop as harvested'
+                  });
+                  
+                  toast({
+                    title: "✅ फसल कटाई पूरी / Harvest Complete!",
+                    description: `${field.name} अब इतिहास में है। बधाई हो! / ${field.name} is now in history. Congratulations!`,
+                    duration: 5000,
+                  });
+                  
+                  // Navigate back to field list
+                  setTimeout(() => navigate('/soilsati'), 2000);
+                } catch (error) {
+                  console.error('Failed to archive field:', error);
+                  toast({
+                    title: "❌ समस्या आई / Problem Occurred",
+                    description: "कृपया फिर से कोशिश करें / Please try again",
+                    variant: "destructive"
+                  });
+                }
+              }
+            }}
+            variant="outline"
+            className="w-full border-amber-300 text-amber-700 hover:bg-amber-50 text-base py-6"
+          >
+            <Package className="w-5 h-5 mr-2" />
+            🌾 फसल कट गई / Crop Harvested
+          </Button>
+        )}
+        
+        {/* Start New Crop Button - Farmer Friendly */}
+        {(field.status === 'harvested' || field.status === 'dormant') && (
+          <Button
+            onClick={async () => {
+              const newCrop = prompt(`"${field.name}" में नई फसल बोएं / Start New Crop in "${field.name}"\n\nनई फसल का नाम लिखें / Enter new crop name:\n(जैसे: धान, गेहूं, मक्का / e.g., Rice, Wheat, Corn)`);
+              if (newCrop && newCrop.trim()) {
+                try {
+                  const { fieldLifecycleService } = await import('@/lib/fieldLifecycleService');
+                  await fieldLifecycleService.reactivateField(
+                    fieldId || field.id,
+                    newCrop.trim(),
+                    { reactivationReason: 'New crop sowing started' }
+                  );
+                  
+                  toast({
+                    title: "✅ नई फसल शुरू! / New Crop Started!",
+                    description: `${field.name} में ${newCrop} की निगरानी शुरू हो गई / Monitoring started for ${newCrop} in ${field.name}`,
+                    duration: 5000,
+                  });
+                  
+                  // Reload page
+                  window.location.reload();
+                } catch (error) {
+                  console.error('Failed to reactivate field:', error);
+                  toast({
+                    title: "❌ समस्या आई / Problem Occurred",
+                    description: "कृपया फिर से कोशिश करें / Please try again",
+                    variant: "destructive"
+                  });
+                }
+              }
+            }}
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:opacity-90 text-base py-6"
+          >
+            <Leaf className="w-5 h-5 mr-2" />
+            🌱 नई फसल बोएं / Start New Crop
+          </Button>
+        )}
 
         {canPredictYield ? (
           <Dialog open={yieldDialogOpen} onOpenChange={setYieldDialogOpen}>

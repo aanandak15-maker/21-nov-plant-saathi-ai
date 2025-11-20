@@ -11,6 +11,13 @@ export const CartView = () => {
   const [cart, setCart] = useState<Cart>({ items: [], total: 0, itemCount: 0 });
 
   useEffect(() => {
+    // 🔥 LOG CART PAGE VIEW
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      blackBoxService.logUserInteraction('page_view', 'cart_view', undefined, {
+        timestamp: new Date().toISOString()
+      });
+    });
+
     loadCart();
     
     // Listen for cart updates
@@ -22,21 +29,61 @@ export const CartView = () => {
     return () => window.removeEventListener('cartUpdated', handleCartUpdate as EventListener);
   }, []);
 
-  const loadCart = () => {
-    setCart(cartService.getCart());
+  const loadCart = async () => {
+    // Try to load from Supabase first (for logged-in users)
+    const cart = await cartService.loadCartFromSupabase();
+    setCart(cart);
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+    // 🔥 LOG QUANTITY UPDATE
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      const item = cart.items.find(i => i.product_id === productId);
+      blackBoxService.logUserInteraction('button_click', 'cart_quantity_update', undefined, {
+        productId,
+        productName: item?.product_name,
+        oldQuantity: item?.quantity,
+        newQuantity: quantity,
+        timestamp: new Date().toISOString()
+      });
+    });
     cartService.updateQuantity(productId, quantity);
   };
 
   const removeItem = (productId: string) => {
+    // 🔥 LOG ITEM REMOVAL
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      const item = cart.items.find(i => i.product_id === productId);
+      blackBoxService.logUserInteraction('button_click', 'cart_item_remove', undefined, {
+        productId,
+        productName: item?.product_name,
+        quantity: item?.quantity,
+        price: item?.price,
+        timestamp: new Date().toISOString()
+      });
+    });
     cartService.removeFromCart(productId);
     toast.success('Item removed from cart');
   };
 
   const handleBulkOrder = () => {
     const links = cartService.generateBulkOrderLinks();
+    
+    // 🔥 LOG BULK ORDER PLACEMENT
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      blackBoxService.logUserInteraction('button_click', 'cart_bulk_order_placed', undefined, {
+        itemCount: cart.itemCount,
+        totalValue: cart.total,
+        productCount: links.length,
+        products: cart.items.map(item => ({
+          id: item.product_id,
+          name: item.product_name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        timestamp: new Date().toISOString()
+      });
+    });
     
     // Open all links in new tabs
     links.forEach((link, index) => {
@@ -51,11 +98,31 @@ export const CartView = () => {
   const copyBulkOrderText = () => {
     const text = cartService.generateBulkOrderText();
     navigator.clipboard.writeText(text);
+    
+    // 🔥 LOG COPY ACTION
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      blackBoxService.logUserInteraction('button_click', 'cart_copy_details', undefined, {
+        itemCount: cart.itemCount,
+        totalValue: cart.total,
+        timestamp: new Date().toISOString()
+      });
+    });
+    
     toast.success('Order details copied to clipboard!');
   };
 
   const shareBulkOrder = async () => {
     const text = cartService.generateBulkOrderText();
+    
+    // 🔥 LOG SHARE ACTION
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      blackBoxService.logUserInteraction('button_click', 'cart_share_order', undefined, {
+        itemCount: cart.itemCount,
+        totalValue: cart.total,
+        shareMethod: navigator.share ? 'native_share' : 'clipboard',
+        timestamp: new Date().toISOString()
+      });
+    });
     
     if (navigator.share) {
       try {
@@ -73,6 +140,15 @@ export const CartView = () => {
 
   const clearCart = () => {
     if (window.confirm('Are you sure you want to clear your cart?')) {
+      // 🔥 LOG CART CLEAR
+      import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+        blackBoxService.logUserInteraction('button_click', 'cart_cleared', undefined, {
+          itemCount: cart.itemCount,
+          totalValue: cart.total,
+          timestamp: new Date().toISOString()
+        });
+      });
+      
       cartService.clearCart();
       toast.success('Cart cleared');
     }

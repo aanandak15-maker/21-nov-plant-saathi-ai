@@ -66,6 +66,40 @@ export const DashboardHeader = ({ weatherData, irrigationData, diseaseOutbreaks 
     return count;
   }, [weatherData, irrigationData, diseaseOutbreaks]);
 
+  // Check if we're in a colored header context (no greeting text needed)
+  const isCompactMode = true; // Always compact for farmer-friendly dashboard
+
+  if (isCompactMode) {
+    return (
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-white hover:bg-white/20"
+          onClick={() => navigate("/notifications")}
+        >
+          <Bell className="h-5 w-5" />
+          {notificationCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {notificationCount > 9 ? "9+" : notificationCount}
+            </Badge>
+          )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/20"
+          onClick={() => navigate("/profile")}
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between mb-6">
       <div>

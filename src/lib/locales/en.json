@@ -1,5 +1,5 @@
 {
-  "app_title": "Plant Saathi",
+  "app_title": "Plant Saathi AI",
   "soilsati": "Soil Saathi",
   "disease_detection": "Disease Detection",
   "yield_prediction": "Yield Prediction",
@@ -48,7 +48,99 @@
   "back": "Back",
   "voice_input": "Voice Input",
   "listen_message": "Listen to Message",
-  "critical_alerts": "Critical Alert",
+
+  "homepage": {
+    "nav": {
+      "login": "Login",
+      "signup": "Sign Up"
+    },
+    "hero": {
+      "tagline": "Your AI-powered farming companion for smarter decisions and better yields",
+      "getStarted": "Get Started Free",
+      "learnMore": "Learn More",
+      "trust": "Trusted by 10,000+ farmers across India"
+    },
+    "features": {
+      "title": "Everything You Need to Farm Smarter",
+      "subtitle": "Six powerful modules working together to maximize your farm productivity",
+      "learnMore": "Learn more →",
+      "cta": "Ready to transform your farming?",
+      "startNow": "Start Now - It's Free",
+      "soil-saathi": {
+        "title": "Soil Saathi",
+        "description": "Real-time satellite monitoring of your fields with NDVI, EVI, and soil moisture data"
+      },
+      "disease-detection": {
+        "title": "Disease Detection",
+        "description": "AI-powered crop disease identification with treatment recommendations"
+      },
+      "ai-advisor": {
+        "title": "AI Advisor",
+        "description": "Get personalized farming advice powered by advanced AI"
+      },
+      "weather": {
+        "title": "Weather Intelligence",
+        "description": "16-day forecasts with farming-specific alerts and recommendations"
+      },
+      "marketplace": {
+        "title": "Smart Marketplace",
+        "description": "AI-recommended products based on your field conditions and crop needs"
+      },
+      "mandi-prices": {
+        "title": "Mandi Prices",
+        "description": "Live market prices and trends to help you sell at the right time"
+      }
+    },
+    "footer": {
+      "tagline": "Empowering farmers with AI and satellite technology",
+      "about": "About",
+      "contact": "Contact",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "rights": "All rights reserved."
+    }
+  },
+  
+  "home": "Home",
+  "my_fields": "My Fields",
+  "market": "Market",
+  "check_health": "Check Health",
+  "learn": "Learn",
+  "critical_alerts": "Critical Alerts",
+  
+  "plant_growth": "Plant Growth",
+  "plant_health": "Plant Health",
+  "water_level": "Water Level",
+  "soil_wetness": "Soil Wetness",
+  "growth_nutrient": "Growth Nutrient",
+  "healthy": "Healthy",
+  "monitor": "Monitor",
+  "needs_attention": "Needs Attention",
+  "critical": "Critical",
+  "updated": "Updated",
+  "just_now": "Just now",
+  "hours_ago": "hours ago",
+  "days_ago": "days ago",
+  "weeks_ago": "weeks ago",
+  "add_field": "Add Field",
+  "view_details": "View Details",
+  "update_now": "Update Now",
+  "no_fields_yet": "No Fields Yet",
+  "add_first_field": "Add your first field to start monitoring",
+  "perfect_time_to_water": "Perfect time to water",
+  "good_time_to_water": "Good time to water",
+  "rain_expected": "Rain expected - No need to water",
+  "high_disease_risk": "High disease risk",
+  "good_for_spraying": "Good for spraying",
+  "avoid_spraying": "Avoid spraying today",
+  "price_up": "Prices up",
+  "price_down": "Prices down",
+  "best_time_to_sell": "Best time to sell",
+  "wait_to_sell": "Wait to sell",
+  "getting_info": "Getting latest information",
+  "loading_data": "Loading data",
+  "checking_connection": "Checking internet connection",
+  "taking_longer": "Taking longer than usual",
   "voice_commands": "Voice Commands",
   "speak_in_hindi": "Speak in Hindi",
   "voice_help": "Voice Help",
@@ -66,13 +158,8 @@
   "irrigation_advice": "Irrigation Advice",
   "pest_alerts": "Pest Alerts",
   "market_prices": "Market Prices",
-  "my_fields": "My Fields",
-  "add_field": "Add Field",
-  "no_fields_yet": "No Fields Yet",
   "start_mapping_first_field": "Start by mapping your first field to get satellite insights",
   "map_first_field": "Map Your First Field",
-  "healthy": "Healthy",
-  "monitor": "Monitor",
   "stress": "Stress",
   "pending": "Pending",
   "area_label": "Area",
@@ -260,7 +347,6 @@
   "when": "When",
   "benefit": "Benefit",
   "buy_now": "Buy Now",
-  "view_details": "View Details",
   "hide_details": "Hide Details",
   "full_explanation": "Full Explanation:",
   "application_instructions": "Application Instructions:",
@@ -286,7 +372,6 @@
   "irrigation_today": "Irrigation Today",
   "forecast": "3-Day Forecast",
   "no_fields": "No Fields Added",
-  "add_first_field": "Add your first field to start monitoring",
   "view_all": "View All",
   "crop": "Crop",
   "area": "Area",
@@ -315,7 +400,7 @@
   "all_modules": "All Modules",
   "soil_saathi": "Soil Saathi",
   "soil_analysis": "Soil & Field Analysis",
-  "plant_saathi": "Plant Saathi",
+  "plant_saathi": "Plant Saathi AI",
   "jal_saathi": "Jal Saathi",
   "irrigation_scheduler": "Smart Irrigation",
   "forecast_advice": "Forecast & Advice",
@@ -341,7 +426,6 @@
   "best_prices": "Best prices • Fast delivery • Quality guaranteed",
   "disease_monitoring": "Disease Monitoring",
   "total_detections": "Total",
-  "critical": "Critical",
   "today": "Today",
   "yield_impact": "Yield Impact",
   "recovery": "Recovery",
@@ -352,10 +436,7 @@
   "all_clear": "All Clear!",
   "no_alerts_category": "No alerts in this category. Your farm is doing great!",
   "mark_all_read": "Mark All as Read",
-  "just_now": "Just now",
   "minutes_ago": "m ago",
-  "hours_ago": "h ago",
-  "days_ago": "d ago",
   
   "mandiPrices": "Mandi Prices",
   "mandiPricesSubtitle": "Daily wholesale commodity prices from markets across India",

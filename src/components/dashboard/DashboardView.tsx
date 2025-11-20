@@ -19,6 +19,8 @@ import { diseaseDetectionService } from "@/lib/diseaseDetectionService";
 import { supabaseFieldService } from "@/lib/supabaseFieldService";
 import { migrateLocalStorageToSupabase, needsMigration } from "@/lib/migrateLocalStorageToSupabase";
 import { mandiPriceService } from "@/lib/mandiPriceService";
+import { aiOrchestrator, type FieldStrategy } from "@/lib/aiOrchestrator";
+import { Brain, TrendingUp, Target, Calendar, AlertTriangle, Sparkles } from "lucide-react";
 
 export const DashboardView = () => {
   const { t } = useTranslation();
@@ -32,6 +34,8 @@ export const DashboardView = () => {
   const [migrating, setMigrating] = useState(false);
   const [criticalAlerts, setCriticalAlerts] = useState<any[]>([]);
   const [priceAlert, setPriceAlert] = useState<any>(null);
+  const [aiStrategy, setAiStrategy] = useState<FieldStrategy | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -47,6 +51,13 @@ export const DashboardView = () => {
     // Quick Win #3: Market Price Alert
     checkMarketPrices();
   }, []);
+
+  useEffect(() => {
+    // Load AI Strategy when fields are loaded
+    if (fieldsData.length > 0) {
+      loadAIStrategy();
+    }
+  }, [fieldsData]);
 
   const loadDashboardData = async () => {
     try {
@@ -111,11 +122,16 @@ export const DashboardView = () => {
   const loadFieldsFromSupabase = async () => {
     try {
       // Load fields from Supabase
-      const fields = await supabaseFieldService.getFields();
+      const allFields = await supabaseFieldService.getFields();
+      
+      // Filter to only show ACTIVE fields on dashboard (exclude harvested/dormant)
+      const activeFields = allFields.filter((field: any) => 
+        !field.status || field.status === 'active'
+      );
       
       // Enrich each field with latest field data
       const enrichedFields = await Promise.all(
-        fields.map(async (field: any) => {
+        activeFields.map(async (field: any) => {
           try {
             const latestData = await supabaseFieldService.getLatestFieldData(field.id);
             if (latestData) {
@@ -333,6 +349,24 @@ export const DashboardView = () => {
     setCriticalAlerts(alerts);
   };
 
+  const loadAIStrategy = async () => {
+    setLoadingAI(true);
+    try {
+      const primaryField = fieldsData[0];
+      if (primaryField) {
+        const strategy = await aiOrchestrator.getFieldStrategy(
+          primaryField.id,
+          'current_user'
+        );
+        setAiStrategy(strategy);
+      }
+    } catch (error) {
+      console.error('Failed to load AI strategy:', error);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
   const checkMarketPrices = async () => {
     try {
       // Get common crops
@@ -417,6 +451,130 @@ export const DashboardView = () => {
       )}
       
       <div className="space-y-3 p-4 pb-20">
+        {/* AI Strategy Hero Section */}
+        {aiStrategy && !loadingAI && (
+          <div className="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 rounded-2xl p-6 text-white shadow-2xl animate-slide-in-up">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                <Brain className="w-8 h-8" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-2xl font-bold">🤖 AI Farming Strategy</h2>
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">
+                    {aiStrategy.confidence}% Confidence
+                  </span>
+                </div>
+                <p className="text-white/90 text-sm">
+                  Powered by Plant Saathi Intelligence
+                </p>
+              </div>
+            </div>
+
+            {/* Recommendation */}
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5" />
+                <h3 className="font-bold text-lg">Recommended Crop</h3>
+              </div>
+              <p className="text-2xl font-bold mb-2">{aiStrategy.recommendation.crop}</p>
+              <p className="text-white/90 text-sm">{aiStrategy.recommendation.reason}</p>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Target className="w-4 h-4" />
+                  <span className="text-xs font-medium text-white/80">Expected Profit</span>
+                </div>
+                <p className="text-2xl font-bold">₹{(aiStrategy.profitAnalysis.netProfit / 1000).toFixed(0)}K</p>
+                <p className="text-xs text-white/70">per field</p>
+              </div>
+              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="text-xs font-medium text-white/80">ROI</span>
+                </div>
+                <p className="text-2xl font-bold">{aiStrategy.profitAnalysis.roi.toFixed(0)}%</p>
+                <p className="text-xs text-white/70">return on investment</p>
+              </div>
+            </div>
+
+            {/* Top Actions */}
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="w-5 h-5" />
+                <h3 className="font-bold">Next Actions</h3>
+              </div>
+              <div className="space-y-2">
+                {aiStrategy.actions.slice(0, 3).map((action, idx) => {
+                  const iconMap: Record<string, string> = {
+                    planting: '🌱',
+                    irrigation: '💧',
+                    fertilizer: '🧪',
+                    pest: '🦟',
+                    harvest: '🌾',
+                    selling: '💰'
+                  };
+                  return (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="text-lg">{iconMap[action.category] || '📋'}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{action.title}</p>
+                        <p className="text-xs text-white/70">{action.deadline || 'Soon'}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Risks */}
+            {aiStrategy.risks.factors.length > 0 && (
+              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  <h3 className="font-bold">Risk Awareness</h3>
+                </div>
+                <div className="space-y-2">
+                  {aiStrategy.risks.factors.slice(0, 2).map((risk, idx) => (
+                    <div key={idx} className="text-sm">
+                      <p className="font-medium">
+                        {risk.type === 'disease' ? '🦠' : risk.type === 'weather' ? '🌦️' : risk.type === 'market' ? '📊' : '🌱'} {risk.description}
+                      </p>
+                      <p className="text-xs text-white/70">→ {risk.mitigation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* View Full Analysis Button */}
+            <button
+              onClick={() => navigate('/soil-saathi')}
+              className="w-full mt-4 px-4 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl text-sm font-medium transition-all active:scale-95"
+            >
+              View Full AI Analysis →
+            </button>
+          </div>
+        )}
+
+        {/* Loading AI Strategy */}
+        {loadingAI && (
+          <div className="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 rounded-2xl p-6 text-white shadow-2xl">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                <Brain className="w-8 h-8 animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-2">🤖 Analyzing Your Farm...</h2>
+                <p className="text-white/90 text-sm">AI is processing soil, weather, and market data to generate your personalized strategy.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero Section */}
         <DashboardHeader 
           weatherData={weatherData}

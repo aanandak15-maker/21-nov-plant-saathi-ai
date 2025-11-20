@@ -414,6 +414,24 @@ const SchemeCard = ({ scheme, userState, userCrops }: SchemeCardProps) => {
   const isLocationMatch = !scheme.stateSpecific || scheme.stateSpecific.length === 0 || scheme.stateSpecific.includes(userState);
   const isCropMatch = !scheme.cropSpecific || scheme.cropSpecific.length === 0 || scheme.cropSpecific.some(crop => userCrops.includes(crop));
 
+  // 🔥 LOG SCHEME EXPANSION
+  const handleExpansion = (expanded: boolean) => {
+    setIsExpanded(expanded);
+    
+    if (expanded) {
+      import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+        blackBoxService.logUserInteraction('button_click', 'scheme_expanded', undefined, {
+          schemeName: scheme.name,
+          category: scheme.category,
+          priority: scheme.priority,
+          isLocationMatch,
+          isCropMatch,
+          timestamp: new Date().toISOString()
+        });
+      });
+    }
+  };
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500">
       {/* Header with gradient */}
@@ -467,7 +485,7 @@ const SchemeCard = ({ scheme, userState, userCrops }: SchemeCardProps) => {
       </CardHeader>
 
       <CardContent className="pt-3">
-        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <Collapsible open={isExpanded} onOpenChange={handleExpansion}>
           <CollapsibleTrigger asChild>
             <Button variant="outline" size="sm" className="w-full justify-between">
               <span>View Details</span>

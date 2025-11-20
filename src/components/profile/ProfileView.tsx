@@ -37,6 +37,13 @@ export const ProfileView = () => {
   const [userRole, setUserRole] = useState<UserRole>('user');
 
   useEffect(() => {
+    // 🔥 LOG PROFILE PAGE VIEW
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      blackBoxService.logUserInteraction('page_view', 'profile_view', undefined, {
+        timestamp: new Date().toISOString()
+      });
+    });
+
     // Load user role from localStorage
     const savedRole = localStorage.getItem('user_role') as UserRole;
     if (savedRole) {
@@ -50,12 +57,28 @@ export const ProfileView = () => {
     localStorage.setItem('user_role', newRole);
     toast.success(`Switched to ${newRole === 'admin' ? 'Admin' : 'User'} mode`);
     
+    // 🔥 LOG ROLE SWITCH
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      blackBoxService.logUserInteraction('button_click', 'role_switch', undefined, {
+        fromRole: userRole,
+        toRole: newRole,
+        timestamp: new Date().toISOString()
+      });
+    });
+    
     if (newRole === 'admin') {
       navigate('/admin');
     }
   };
 
   const goToCart = () => {
+    // 🔥 LOG CART NAVIGATION
+    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+      blackBoxService.logUserInteraction('button_click', 'navigate_to_cart', undefined, {
+        source: 'profile_page',
+        timestamp: new Date().toISOString()
+      });
+    });
     navigate('/cart');
   };
 
@@ -150,6 +173,15 @@ export const ProfileView = () => {
                 <button
                   key={item.label}
                   onClick={() => {
+                    // 🔥 LOG MENU ITEM CLICK
+                    import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+                      blackBoxService.logUserInteraction('button_click', 'profile_menu_item', undefined, {
+                        menuItem: item.label,
+                        section: section.section,
+                        timestamp: new Date().toISOString()
+                      });
+                    });
+
                     if (item.label === "AI Assistant") {
                       navigate('/settings/ai');
                     } else {
@@ -177,7 +209,33 @@ export const ProfileView = () => {
 
       {/* Logout */}
       <div className="px-6 mt-6">
-        <Button variant="outline" className="w-full border-destructive/50 text-destructive hover:bg-destructive/5">
+        <Button 
+          variant="outline" 
+          className="w-full border-destructive/50 text-destructive hover:bg-destructive/5"
+          onClick={async () => {
+            try {
+              // 🔥 LOG LOGOUT
+              import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+                blackBoxService.logUserInteraction('button_click', 'logout', undefined, {
+                  timestamp: new Date().toISOString()
+                });
+              });
+
+              // Clear all local storage
+              localStorage.clear();
+              
+              // Sign out from Supabase
+              const { supabaseAuthService } = await import('@/lib/supabaseAuthService');
+              await supabaseAuthService.signOut();
+              
+              toast.success('Logged out successfully');
+              navigate('/auth');
+            } catch (error) {
+              console.error('Logout error:', error);
+              toast.error('Failed to logout');
+            }
+          }}
+        >
           <LogOut className="w-5 h-5 mr-2" />
           Logout
         </Button>
@@ -195,6 +253,15 @@ export const ProfileView = () => {
               href={socialLinks.instagram}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                // 🔥 LOG SOCIAL MEDIA CLICK
+                import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+                  blackBoxService.logUserInteraction('button_click', 'social_media_link', undefined, {
+                    platform: 'instagram',
+                    timestamp: new Date().toISOString()
+                  });
+                });
+              }}
               className="social-link flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:shadow-lg transition-all"
             >
               <Instagram className="w-7 h-7" />
@@ -206,6 +273,15 @@ export const ProfileView = () => {
               href={socialLinks.youtube}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                // 🔥 LOG SOCIAL MEDIA CLICK
+                import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+                  blackBoxService.logUserInteraction('button_click', 'social_media_link', undefined, {
+                    platform: 'youtube',
+                    timestamp: new Date().toISOString()
+                  });
+                });
+              }}
               className="social-link flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-red-600 text-white hover:shadow-lg transition-all"
             >
               <Youtube className="w-7 h-7" />
@@ -215,6 +291,15 @@ export const ProfileView = () => {
             {/* Email */}
             <a
               href={`mailto:${socialLinks.email}`}
+              onClick={() => {
+                // 🔥 LOG SOCIAL MEDIA CLICK
+                import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+                  blackBoxService.logUserInteraction('button_click', 'social_media_link', undefined, {
+                    platform: 'email',
+                    timestamp: new Date().toISOString()
+                  });
+                });
+              }}
               className="social-link flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-blue-600 text-white hover:shadow-lg transition-all"
             >
               <Mail className="w-7 h-7" />
@@ -224,6 +309,15 @@ export const ProfileView = () => {
             {/* Phone */}
             <a
               href={`tel:${socialLinks.phone}`}
+              onClick={() => {
+                // 🔥 LOG SOCIAL MEDIA CLICK
+                import('@/lib/blackBoxService').then(({ blackBoxService }) => {
+                  blackBoxService.logUserInteraction('button_click', 'social_media_link', undefined, {
+                    platform: 'phone',
+                    timestamp: new Date().toISOString()
+                  });
+                });
+              }}
               className="social-link flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-green-600 text-white hover:shadow-lg transition-all"
             >
               <Phone className="w-7 h-7" />

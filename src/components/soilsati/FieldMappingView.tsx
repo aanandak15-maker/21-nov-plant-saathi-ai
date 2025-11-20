@@ -26,12 +26,20 @@ export const FieldMappingView = () => {
       // Save to Supabase
       const { supabaseFieldService } = await import('@/lib/supabaseFieldService');
       
+      // Calculate center point for location string
+      const centerLat = coordinates && coordinates.length > 0
+        ? coordinates.reduce((sum, coord) => sum + coord[0], 0) / coordinates.length
+        : 0;
+      const centerLng = coordinates && coordinates.length > 0
+        ? coordinates.reduce((sum, coord) => sum + coord[1], 0) / coordinates.length
+        : 0;
+      
       const newField = await supabaseFieldService.createField({
         name: fieldData.name,
+        location: `${centerLat.toFixed(4)}°N, ${centerLng.toFixed(4)}°E`,
         crop_type: fieldData.cropType,
         area: area || 0,
         coordinates: coordinates || [],
-        sowing_date: fieldData.sowingDate,
         status: 'active'
       });
       

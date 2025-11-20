@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Check My Fields Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #2d5016; }
+    .status { 
+      padding: 15px; 
+      margin: 20px 0; 
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    .field-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+    .field-card h3 { margin: 0 0 10px 0; color: #2d5016; }
+    .field-detail { margin: 5px 0; }
+    button {
+      background: #2d5016;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover { background: #1f3810; }
+    .localStorage-data {
+      background: #fff3cd;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌾 Check My Fields Data</h1>
+    <p>This tool will check both Supabase and LocalStorage for your field data.</p>
+    
+    <button onclick="checkData()">🔍 Check My Data</button>
+    <button onclick="checkLocalStorage()">💾 Check LocalStorage</button>
+    <button onclick="migrateToSupabase()">🔄 Migrate LocalStorage → Supabase</button>
+    
+    <div id="results"></div>
+  </div>
+
+  <script>
+    // Your Supabase credentials (from .env)
+    const SUPABASE_URL = 'https://yfvqfqhqxqxqxqxq.supabase.co'; // Replace with your actual URL
+    const SUPABASE_ANON_KEY = 'your-anon-key'; // Replace with your actual key
+
+    let supabase;
+
+    function initSupabase() {
+      const url = prompt('Enter your Supabase URL:', SUPABASE_URL);
+      const key = prompt('Enter your Supabase Anon Key:', SUPABASE_ANON_KEY);
+      
+      if (url && key) {
+        supabase = window.supabase.createClient(url, key);
+        return true;
+      }
+      return false;
+    }
+
+    async function checkData() {
+      const results = document.getElementById('results');
+      results.innerHTML = '<div class="status info">🔍 Checking Supabase...</div>';
+      
+      if (!supabase && !initSupabase()) {
+        results.innerHTML = '<div class="status error">❌ Supabase credentials required</div>';
+        return;
+      }
+
+      try {
+        // Check if user is logged in
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          results.innerHTML = `
+            <div class="status error">
+              ❌ Not logged in to Supabase<br>
+              Please log in to the app first, then try again.
+            </div>
+          `;
+          return;
+        }
+
+        results.innerHTML += `<div class="status success">✅ Logged in as: ${user.email}</div>`;
+
+        // Fetch fields
+        const { data: fields, error: fieldsError } = await supabase
+          .from('fields')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (fieldsError) {
+          results.innerHTML += `<div class="status error">❌ Error: ${fieldsError.message}</div>`;
+          return;
+        }
+
+        if (!fields || fields.length === 0) {
+          results.innerHTML += `
+            <div class="status info">
+              ℹ️ No fields found in Supabase<br>
+              Your data might be in LocalStorage. Click "Check LocalStorage" button.
+            </div>
+          `;
+          return;
+        }
+
+        // Display fields
+        results.innerHTML += `
+          <div class="status success">
+            ✅ Found ${fields.length} field(s) in Supabase!
+          </div>
+        `;
+
+        fields.forEach(field => {
+          results.innerHTML += `
+            <div class="field-card">
+              <h3>🌾 ${field.name}</h3>
+              <div class="field-detail"><strong>ID:</strong> ${field.id}</div>
+              <div class="field-detail"><strong>Crop:</strong> ${field.crop_type || 'Unknown'}</div>
+              <div class="field-detail"><strong>Area:</strong> ${field.area || 0} hectares</div>
+              <div class="field-detail"><strong>Status:</strong> ${field.status || 'active'}</div>
+              <div class="field-detail"><strong>Created:</strong> ${new Date(field.created_at).toLocaleString()}</div>
+              <div class="field-detail"><strong>Coordinates:</strong> ${field.coordinates ? field.coordinates.length + ' points' : 'None'}</div>
+            </div>
+          `;
+        });
+
+      } catch (error) {
+        results.innerHTML += `<div class="status error">❌ Error: ${error.message}</div>`;
+      }
+    }
+
+    function checkLocalStorage() {
+      const results = document.getElementById('results');
+      results.innerHTML = '<div class="status info">💾 Checking LocalStorage...</div>';
+
+      const localStorageKeys = Object.keys(localStorage);
+      const fieldKeys = localStorageKeys.filter(key => key.startsWith('field_'));
+
+      if (fieldKeys.length === 0) {
+        results.innerHTML += `
+          <div class="status info">
+            ℹ️ No field data found in LocalStorage
+          </div>
+        `;
+        return;
+      }
+
+      results.innerHTML += `
+        <div class="status success">
+          ✅ Found ${fieldKeys.length} field(s) in LocalStorage!
+        </div>
+      `;
+
+      fieldKeys.forEach(key => {
+        try {
+          const fieldData = JSON.parse(localStorage.getItem(key));
+          results.innerHTML += `
+            <div class="field-card">
+              <h3>🌾 ${fieldData.name || 'Unnamed Field'}</h3>
+              <div class="field-detail"><strong>Key:</strong> ${key}</div>
+              <div class="field-detail"><strong>Crop:</strong> ${fieldData.cropType || 'Unknown'}</div>
+              <div class="field-detail"><strong>Area:</strong> ${fieldData.area || 0} hectares</div>
+              <div class="field-detail"><strong>Coordinates:</strong> ${fieldData.coordinates ? fieldData.coordinates.length + ' points' : 'None'}</div>
+              <pre>${JSON.stringify(fieldData, null, 2).substring(0, 500)}...</pre>
+            </div>
+          `;
+        } catch (error) {
+          results.innerHTML += `
+            <div class="status error">
+              ❌ Error reading ${key}: ${error.message}
+            </div>
+          `;
+        }
+      });
+
+      results.innerHTML += `
+        <div class="status info">
+          💡 Tip: If you see data here but not in Supabase, click "Migrate LocalStorage → Supabase"
+        </div>
+      `;
+    }
+
+    async function migrateToSupabase() {
+      const results = document.getElementById('results');
+      results.innerHTML = '<div class="status info">🔄 Starting migration...</div>';
+
+      if (!supabase && !initSupabase()) {
+        results.innerHTML = '<div class="status error">❌ Supabase credentials required</div>';
+        return;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          results.innerHTML += '<div class="status error">❌ Please log in first</div>';
+          return;
+        }
+
+        const localStorageKeys = Object.keys(localStorage);
+        const fieldKeys = localStorageKeys.filter(key => key.startsWith('field_') && key.endsWith('_data'));
+
+        if (fieldKeys.length === 0) {
+          results.innerHTML += '<div class="status info">ℹ️ No fields to migrate</div>';
+          return;
+        }
+
+        let migrated = 0;
+        let errors = 0;
+
+        for (const key of fieldKeys) {
+          try {
+            const fieldData = JSON.parse(localStorage.getItem(key));
+            
+            // Insert into Supabase
+            const { error } = await supabase
+              .from('fields')
+              .insert([{
+                user_id: user.id,
+                name: fieldData.name,
+                crop_type: fieldData.cropType,
+                area: fieldData.area,
+                coordinates: fieldData.coordinates,
+                sowing_date: fieldData.sowingDate,
+                variety: fieldData.variety,
+                irrigation_method: fieldData.irrigationMethod,
+                status: 'active'
+              }]);
+
+            if (error) {
+              console.error('Migration error:', error);
+              errors++;
+            } else {
+              migrated++;
+            }
+          } catch (error) {
+            console.error('Parse error:', error);
+            errors++;
+          }
+        }
+
+        results.innerHTML += `
+          <div class="status success">
+            ✅ Migration complete!<br>
+            Migrated: ${migrated} fields<br>
+            Errors: ${errors}
+          </div>
+        `;
+
+        if (migrated > 0) {
+          results.innerHTML += `
+            <div class="status info">
+              🎉 Your fields are now in Supabase!<br>
+              Refresh the app to see them.
+            </div>
+          `;
+        }
+
+      } catch (error) {
+        results.innerHTML += `<div class="status error">❌ Migration error: ${error.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

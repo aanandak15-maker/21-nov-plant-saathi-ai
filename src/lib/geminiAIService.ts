@@ -5,9 +5,10 @@
 
 import { weatherService } from './weatherService';
 import { fieldDataCacheService } from './fieldDataCacheService';
+import { ragService } from './ai/RAGService';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
 export interface UserContext {
   fields: FieldInfo[];
@@ -194,7 +195,7 @@ No fields added yet. Encourage the user to add their fields using the Soil Saath
    * Get base system prompt with farming expertise
    */
   private getBaseSystemPrompt(): string {
-    return `You are an expert agricultural AI assistant for Indian farmers. Your name is "Krishi Saathi" (Farming Companion).
+    const basePrompt = `You are an expert agricultural AI assistant for Indian farmers. Your name is "Krishi Saathi" (Farming Companion).
 
 ## YOUR EXPERTISE:
 - Crop management (wheat, rice, cotton, sugarcane, vegetables, fruits)
@@ -234,6 +235,9 @@ No fields added yet. Encourage the user to add their fields using the Soil Saath
 - Consider current weather in your recommendations
 - Alert about weather-related risks
 - Suggest timing based on weather forecast`;
+
+    // Enhance with RAG examples if available
+    return ragService.enhanceSystemPrompt(basePrompt);
   }
 
   /**

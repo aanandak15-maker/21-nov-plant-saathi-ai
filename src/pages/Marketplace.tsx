@@ -1,11 +1,11 @@
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { AIAdvisorFAB } from "@/components/layout/AIAdvisorFAB";
-import { MarketplaceView } from "@/components/marketplace/MarketplaceView";
+import { FarmerFriendlyMarketplace } from "@/components/marketplace/farmer-friendly/FarmerFriendlyMarketplace";
 
 const Marketplace = () => {
   return (
     <>
-      <MarketplaceView />
+      <FarmerFriendlyMarketplace />
       <AIAdvisorFAB />
       <BottomNavigation />
     </>

@@ -1,0 +1,159 @@
+{
+  "version": "1.0.0",
+  "costOptimization": {
+    "enabled": true,
+    "maxGeminiCallsPerDay": 50,
+    "cacheResponsesForHours": 24,
+    "useLocalIntelligenceFirst": true
+  },
+  "learningBehavior": {
+    "analyzeBlackBoxData": true,
+    "analysisFrequency": "weekly",
+    "minInteractionsBeforeAnalysis": 10,
+    "questionCooldownDays": 3
+  },
+  "profileBuilding": {
+    "requiredFields": ["name", "location", "primaryCrops"],
+    "optionalFields": ["farmSize", "experienceLevel", "challenges", "goals"],
+    "progressiveDiscovery": true
+  },
+  "behaviorPatterns": {
+    "highEngagement": {
+      "threshold": 20,
+      "actions": ["detailed_recommendations", "proactive_alerts"]
+    },
+    "lowEngagement": {
+      "threshold": 5,
+      "actions": ["simple_tips", "encouragement"]
+    }
+  },
+  "intelligentQuestions": {
+    "enabled": true,
+    "maxQuestionsPerWeek": 2,
+    "triggers": [
+      {
+        "id": "missing_crops",
+        "condition": "profile.primaryCrops === null && blackbox.fieldScans > 3",
+        "question": "I've noticed you're monitoring your fields regularly. What crops are you growing?",
+        "priority": "high"
+      },
+      {
+        "id": "disease_detection_unused",
+        "condition": "blackbox.diseaseDetectionUsage === 0 && blackbox.fieldScans > 10",
+        "question": "You check your fields often. Are you facing any pest or disease issues?",
+        "priority": "medium"
+      },
+      {
+        "id": "weather_heavy_user",
+        "condition": "blackbox.weatherChecks > 15 && profile.weatherSensitivity === null",
+        "question": "I see you monitor weather closely. Which crops are most affected by weather on your farm?",
+        "priority": "medium"
+      },
+      {
+        "id": "marketplace_browser",
+        "condition": "blackbox.marketplaceVisits > 5 && blackbox.cartAdditions === 0",
+        "question": "You've been exploring products. What type of inputs are you currently using?",
+        "priority": "low"
+      },
+      {
+        "id": "new_user_onboarding",
+        "condition": "profile.daysActive < 7 && profile.farmSize === null",
+        "question": "Welcome! To give you better advice, how large is your farm?",
+        "priority": "high"
+      }
+    ]
+  },
+  "contextualResponses": {
+    "cropSpecific": {
+      "rice": {
+        "keywords": ["paddy", "rice", "धान"],
+        "focusAreas": ["water_management", "pest_control", "yield_optimization"]
+      },
+      "wheat": {
+        "keywords": ["wheat", "गेहूं"],
+        "focusAreas": ["irrigation", "fertilizer", "harvest_timing"]
+      },
+      "sugarcane": {
+        "keywords": ["sugarcane", "गन्ना"],
+        "focusAreas": ["irrigation", "pest_management", "soil_health"]
+      }
+    },
+    "seasonalAdvice": {
+      "monsoon": {
+        "months": [6, 7, 8, 9],
+        "focus": ["drainage", "disease_prevention", "kharif_crops"]
+      },
+      "winter": {
+        "months": [11, 12, 1, 2],
+        "focus": ["irrigation", "frost_protection", "rabi_crops"]
+      },
+      "summer": {
+        "months": [3, 4, 5],
+        "focus": ["water_conservation", "heat_stress", "zaid_crops"]
+      }
+    }
+  },
+  "proactiveRecommendations": {
+    "enabled": true,
+    "triggers": [
+      {
+        "id": "ndvi_drop_detected",
+        "condition": "fieldData.ndvi < 0.4 && fieldData.previousNdvi > 0.6",
+        "message": "Your field's health has dropped. Would you like me to analyze possible causes?",
+        "action": "suggest_disease_detection"
+      },
+      {
+        "id": "weather_alert",
+        "condition": "weather.rainfall > 50 && fieldData.cropStage === 'flowering'",
+        "message": "Heavy rain expected during flowering. Consider protective measures.",
+        "action": "suggest_weather_protection"
+      },
+      {
+        "id": "market_opportunity",
+        "condition": "mandiPrices.trend === 'rising' && profile.primaryCrops.includes(mandiPrices.commodity)",
+        "message": "Prices for {crop} are rising. Good time to plan harvest.",
+        "action": "show_mandi_prices"
+      }
+    ]
+  },
+  "costSavingStrategies": {
+    "localPatternMatching": {
+      "enabled": true,
+      "commonQueries": [
+        {
+          "patterns": ["weather", "मौसम", "बारिश"],
+          "response": "local_weather_service",
+          "skipGemini": true
+        },
+        {
+          "patterns": ["price", "mandi", "भाव"],
+          "response": "local_mandi_service",
+          "skipGemini": true
+        },
+        {
+          "patterns": ["field", "खेत", "ndvi"],
+          "response": "local_field_service",
+          "skipGemini": true
+        }
+      ]
+    },
+    "responseCache": {
+      "enabled": true,
+      "ttlHours": 24,
+      "cacheGenericQueries": true,
+      "cacheCropAdvice": true
+    },
+    "batchProcessing": {
+      "enabled": true,
+      "analyzeBlackBoxInBatches": true,
+      "batchSize": 100,
+      "frequency": "weekly"
+    }
+  },
+  "privacySettings": {
+    "requireConsent": true,
+    "anonymizeData": true,
+    "allowOptOut": true,
+    "dataRetentionDays": 365
+  }
+}

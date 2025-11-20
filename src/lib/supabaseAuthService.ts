@@ -135,5 +135,53 @@ export const supabaseAuthService = {
   // Listen to auth changes
   onAuthStateChange(callback: (event: string, session: any) => void) {
     return supabase.auth.onAuthStateChange(callback);
+  },
+
+  // Mark onboarding as complete
+  async completeOnboarding() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Not authenticated' };
+
+    // Update profiles table (primary source of truth)
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ onboarding_complete: true })
+      .eq('id', user.id);
+
+    if (profileError) {
+      console.error('Failed to update profile onboarding status:', profileError);
+      return { error: profileError };
+    }
+
+    // Also update user metadata for backward compatibility
+    try {
+      await supabase.auth.updateUser({
+        data: { onboarding_complete: true }
+      });
+    } catch (error) {
+      console.warn('Failed to update user metadata (non-critical):', error);
+    }
+
+    return { error: null };
+  },
+
+  // Check if onboarding is complete
+  async isOnboardingComplete() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    // Check profiles table first (primary source)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_complete')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.onboarding_complete) {
+      return true;
+    }
+
+    // Fallback to user metadata for backward compatibility
+    return user.user_metadata?.onboarding_complete === true;
   }
 };

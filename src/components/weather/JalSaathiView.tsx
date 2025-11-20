@@ -14,6 +14,10 @@ import {
   Bell,
   Loader2,
   Sprout,
+  Cloud,
+  Wind,
+  Thermometer,
+  Eye,
 } from 'lucide-react';
 import {
   jalSaathiService,
@@ -22,6 +26,9 @@ import {
   SoilType,
 } from '@/lib/jalSaathiService';
 import { blackBoxService } from '@/lib/blackBoxService';
+import { weatherIntelligenceService } from '@/lib/weather/weatherIntelligenceService';
+import { weatherCacheService } from '@/lib/weather/weatherCacheService';
+import type { CropAdvisory } from '@/lib/weather/weatherIntelligenceService';
 
 interface JalSaathiViewProps {
   fieldId?: string;
@@ -40,6 +47,9 @@ export const JalSaathiView = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cropStage, setCropStage] = useState<CropStage | null>(null);
+  const [show16DayForecast, setShow16DayForecast] = useState(false);
+  const [forecast16Day, setForecast16Day] = useState<CropAdvisory[]>([]);
+  const [loadingForecast, setLoadingForecast] = useState(false);
 
   useEffect(() => {
     // Log Jal Saathi view access
@@ -53,6 +63,43 @@ export const JalSaathiView = ({
       generateSchedule();
     }
   }, [fieldId, sowingDate]);
+
+  const load16DayForecast = async () => {
+    setLoadingForecast(true);
+    try {
+      // Get coordinates
+      let lat = 28.6139; // Default Delhi
+      let lon = 77.2090;
+      
+      if (typeof location === 'object') {
+        lat = location.lat;
+        lon = location.lon;
+      }
+
+      // Get 16-day advisory
+      const advisory = await weatherIntelligenceService.get16DayCropAdvisory(
+        lat,
+        lon,
+        cropType
+      );
+      
+      setForecast16Day(advisory);
+      setShow16DayForecast(true);
+
+      // Log forecast view
+      blackBoxService.logUserInteraction('button_click', 'view_16day_forecast', fieldId, {
+        cropType,
+        location: `${lat},${lon}`,
+        forecastDays: advisory.length,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Failed to load 16-day forecast:', err);
+      setError('Failed to load 16-day forecast. Please try again.');
+    } finally {
+      setLoadingForecast(false);
+    }
+  };
 
   const generateSchedule = async () => {
     if (!sowingDate) {
@@ -424,13 +471,173 @@ export const JalSaathiView = ({
           </Card>
 
           {/* Refresh Button */}
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-3">
             <Button onClick={generateSchedule} variant="outline" size="lg">
               <Calendar className="h-4 w-4 mr-2" />
               Refresh Schedule
             </Button>
+            <Button 
+              onClick={load16DayForecast} 
+              variant="default" 
+              size="lg"
+              disabled={loadingForecast}
+            >
+              {loadingForecast ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Eye className="h-4 w-4 mr-2" />
+              )}
+              {show16DayForecast ? 'Refresh' : 'View'} 16-Day Forecast
+            </Button>
           </div>
         </>
+      )}
+
+      {/* 16-Day Weather Forecast */}
+      {show16DayForecast && forecast16Day.length > 0 && (
+        <Card className="border-purple-200 dark:border-purple-800">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20">
+            <CardTitle className="text-lg flex items-center gap-2 text-purple-700 dark:text-purple-300">
+              <Calendar className="h-5 w-5" />
+              16-Day Weather Forecast & Crop Advisory
+            </CardTitle>
+            <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+              Extended forecast with daily farming recommendations
+            </p>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-3">
+            {forecast16Day.map((day, index) => (
+              <div
+                key={index}
+                className="p-4 rounded-lg border-2 border-gray-200 dark:border-gray-800 hover:border-purple-300 dark:hover:border-purple-700 transition-all"
+              >
+                {/* Day Header */}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-lg">{day.day}</p>
+                    <p className="text-xs text-muted-foreground">{day.date}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-2">
+                      <Thermometer className="h-4 w-4 text-orange-500" />
+                      <span className="font-bold text-xl">{day.weather.tempMax}°C</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{day.weather.tempMin}°C min</p>
+                  </div>
+                </div>
+
+                {/* Weather Conditions */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded">
+                    <Droplets className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Rain</p>
+                      <p className="text-sm font-semibold">{day.weather.rainfall}%</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                    <Wind className="h-4 w-4 text-gray-600" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Wind</p>
+                      <p className="text-sm font-semibold">{day.weather.windSpeed} km/h</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-cyan-50 dark:bg-cyan-950/20 rounded">
+                    <Cloud className="h-4 w-4 text-cyan-600" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Humidity</p>
+                      <p className="text-sm font-semibold">{day.weather.humidity}%</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alerts */}
+                {day.alerts.length > 0 && (
+                  <div className="mb-3 space-y-1">
+                    {day.alerts.map((alert, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 rounded text-sm"
+                      >
+                        <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                        <span className="text-yellow-800 dark:text-yellow-200">{alert}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Recommended Activities */}
+                {day.activities.recommended.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-1 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Recommended:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {day.activities.recommended.map((activity, i) => (
+                        <Badge key={i} variant="outline" className="text-xs bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                          {activity}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Avoid Activities */}
+                {day.activities.avoid.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1 flex items-center gap-1">
+                      <XCircle className="h-3 w-3" />
+                      Avoid:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {day.activities.avoid.map((activity, i) => (
+                        <Badge key={i} variant="outline" className="text-xs bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800">
+                          {activity}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Critical Activities */}
+                {day.activities.critical.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-orange-700 dark:text-orange-300 mb-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Critical:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {day.activities.critical.map((activity, i) => (
+                        <Badge key={i} variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
+                          {activity}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Special Windows */}
+                {day.sowingWindow && (
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-950/20 rounded flex items-center gap-2">
+                    <Sprout className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                      ✅ Good sowing window
+                    </span>
+                  </div>
+                )}
+                {day.harvestWindow && (
+                  <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/20 rounded flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                      ✅ Good harvest window
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

@@ -1,0 +1,307 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-11-20",
+  "rules": {
+    "disease": [
+      {
+        "id": "disease_leaf_blight",
+        "condition": {
+          "disease": ["leaf blight", "blight"],
+          "confidence": 70
+        },
+        "recommendations": [
+          {
+            "productId": "mancozeb-fungicide",
+            "name": "Mancozeb 75% WP Fungicide",
+            "category": "fungicide",
+            "price": 850,
+            "unit": "500g",
+            "priority": "urgent",
+            "reason": "Treat Leaf Blight immediately to prevent spread",
+            "dosage": "2g per liter of water",
+            "applicationMethod": "Foliar spray every 7-10 days",
+            "expectedResult": "Control within 10-14 days"
+          },
+          {
+            "productId": "copper-oxychloride",
+            "name": "Copper Oxychloride 50% WP",
+            "category": "fungicide",
+            "price": 650,
+            "unit": "500g",
+            "priority": "high",
+            "reason": "Backup treatment for resistant strains",
+            "dosage": "3g per liter of water"
+          }
+        ]
+      },
+      {
+        "id": "disease_blast",
+        "condition": {
+          "disease": ["blast", "rice blast"],
+          "confidence": 70
+        },
+        "recommendations": [
+          {
+            "productId": "tricyclazole",
+            "name": "Tricyclazole 75% WP",
+            "category": "fungicide",
+            "price": 1200,
+            "unit": "100g",
+            "priority": "urgent",
+            "reason": "Highly effective against blast disease",
+            "dosage": "0.6g per liter"
+          }
+        ]
+      },
+      {
+        "id": "disease_stem_borer",
+        "condition": {
+          "disease": ["stem borer", "borer"],
+          "confidence": 70
+        },
+        "recommendations": [
+          {
+            "productId": "chlorpyrifos",
+            "name": "Chlorpyrifos 20% EC",
+            "category": "insecticide",
+            "price": 450,
+            "unit": "500ml",
+            "priority": "urgent",
+            "reason": "Effective pest control for stem borer"
+          },
+          {
+            "productId": "neem-oil",
+            "name": "Organic Neem Oil",
+            "category": "organic-pesticide",
+            "price": 350,
+            "unit": "1L",
+            "priority": "high",
+            "reason": "Organic alternative for pest control"
+          }
+        ]
+      }
+    ],
+    "fieldHealth": [
+      {
+        "id": "critical_health",
+        "condition": {
+          "healthScore": {"max": 30},
+          "ndvi": {"max": 0.3}
+        },
+        "recommendations": [
+          {
+            "productId": "npk-19-19-19",
+            "name": "NPK 19:19:19 Fertilizer",
+            "category": "fertilizer",
+            "price": 1200,
+            "unit": "50kg",
+            "priority": "urgent",
+            "reason": "Critical nutrition deficiency - balanced NPK needed",
+            "dosage": "25kg per acre",
+            "expectedResult": "Visible improvement in 7-10 days"
+          },
+          {
+            "productId": "micronutrient-mix",
+            "name": "Micronutrient Mix (Zn, Fe, Mn, B)",
+            "category": "micronutrient",
+            "price": 450,
+            "unit": "1kg",
+            "priority": "high",
+            "reason": "Complete nutrition for recovery"
+          }
+        ]
+      },
+      {
+        "id": "low_health",
+        "condition": {
+          "healthScore": {"min": 30, "max": 50}
+        },
+        "recommendations": [
+          {
+            "productId": "urea",
+            "name": "Urea 46% N",
+            "category": "fertilizer",
+            "price": 800,
+            "unit": "50kg",
+            "priority": "high",
+            "reason": "Boost nitrogen for better growth"
+          }
+        ]
+      }
+    ],
+    "soilMoisture": [
+      {
+        "id": "low_moisture",
+        "condition": {
+          "moisture": {"max": 30}
+        },
+        "recommendations": [
+          {
+            "productId": "drip-irrigation-kit",
+            "name": "Drip Irrigation Kit (1 Acre)",
+            "category": "irrigation",
+            "price": 15000,
+            "unit": "1 kit",
+            "priority": "urgent",
+            "reason": "Low soil moisture affecting growth - efficient irrigation needed",
+            "savings": "Save 50% water compared to flood irrigation"
+          },
+          {
+            "productId": "mulch-film",
+            "name": "Plastic Mulch Film",
+            "category": "mulch",
+            "price": 2500,
+            "unit": "100m roll",
+            "priority": "high",
+            "reason": "Reduce water evaporation by 70%"
+          }
+        ]
+      }
+    ],
+    "weather": [
+      {
+        "id": "high_humidity_disease_risk",
+        "condition": {
+          "humidity": {"min": 80},
+          "temperature": {"min": 25, "max": 32}
+        },
+        "recommendations": [
+          {
+            "productId": "preventive-fungicide",
+            "name": "Preventive Fungicide Spray",
+            "category": "fungicide",
+            "price": 550,
+            "unit": "500ml",
+            "priority": "high",
+            "reason": "High disease risk due to humidity - preventive treatment recommended"
+          }
+        ]
+      },
+      {
+        "id": "heavy_rain_protection",
+        "condition": {
+          "rainfall": "heavy",
+          "precipitationChance": {"min": 70}
+        },
+        "recommendations": [
+          {
+            "productId": "tarpaulin",
+            "name": "Heavy Duty Tarpaulin",
+            "category": "protection",
+            "price": 1800,
+            "unit": "20x20 ft",
+            "priority": "high",
+            "reason": "Protect crops from heavy rain damage"
+          }
+        ]
+      },
+      {
+        "id": "extreme_heat",
+        "condition": {
+          "temperature": {"min": 38}
+        },
+        "recommendations": [
+          {
+            "productId": "shade-net",
+            "name": "Shade Net 50%",
+            "category": "protection",
+            "price": 3500,
+            "unit": "100 sq m",
+            "priority": "high",
+            "reason": "Protect crops from heat stress"
+          }
+        ]
+      }
+    ],
+    "integrated": [
+      {
+        "id": "disease_plus_low_health",
+        "condition": {
+          "hasDisease": true,
+          "healthScore": {"max": 40}
+        },
+        "recommendations": [
+          {
+            "productId": "combo-disease-nutrition",
+            "name": "Disease Treatment + Nutrition Combo",
+            "category": "combo",
+            "price": 1800,
+            "unit": "combo pack",
+            "priority": "urgent",
+            "reason": "Integrated solution: Treat disease while boosting plant immunity",
+            "savings": "Save ₹500 compared to buying separately",
+            "contains": ["Fungicide", "NPK Fertilizer", "Micronutrients"]
+          }
+        ]
+      },
+      {
+        "id": "low_moisture_heat_stress",
+        "condition": {
+          "moisture": {"max": 30},
+          "temperature": {"min": 35}
+        },
+        "recommendations": [
+          {
+            "productId": "combo-irrigation-mulch",
+            "name": "Water Management Combo",
+            "category": "combo",
+            "price": 4000,
+            "unit": "combo pack",
+            "priority": "urgent",
+            "reason": "Combat water stress with efficient irrigation + mulching",
+            "savings": "Save ₹800 on combo",
+            "contains": ["Drip Kit (small)", "Mulch Film", "Water Retention Gel"]
+          }
+        ]
+      }
+    ],
+    "growthStage": [
+      {
+        "id": "vegetative_stage",
+        "condition": {
+          "growthStage": "vegetative",
+          "daysAfterSowing": {"min": 20, "max": 45}
+        },
+        "recommendations": [
+          {
+            "productId": "nitrogen-fertilizer",
+            "name": "High Nitrogen Fertilizer",
+            "category": "fertilizer",
+            "price": 900,
+            "unit": "50kg",
+            "priority": "medium",
+            "reason": "Vegetative stage needs high nitrogen for leaf growth"
+          }
+        ]
+      },
+      {
+        "id": "flowering_stage",
+        "condition": {
+          "growthStage": "flowering"
+        },
+        "recommendations": [
+          {
+            "productId": "phosphorus-potassium",
+            "name": "Phosphorus + Potassium Fertilizer",
+            "category": "fertilizer",
+            "price": 1100,
+            "unit": "50kg",
+            "priority": "medium",
+            "reason": "Flowering stage needs P & K for better flower and fruit development"
+          }
+        ]
+      }
+    ]
+  },
+  "priorityWeights": {
+    "urgent": 100,
+    "high": 75,
+    "medium": 50,
+    "low": 25
+  },
+  "comboRules": {
+    "minSavings": 300,
+    "maxProductsInCombo": 3,
+    "preferCombosWhen": ["multipleIssues", "highTotalCost"]
+  }
+}

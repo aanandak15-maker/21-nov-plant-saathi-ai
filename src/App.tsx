@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/hooks/useLanguage";
+import { HomePage } from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
 import Notifications from "./pages/Notifications";
 import SoilSati from "./pages/SoilSati";
@@ -21,12 +22,20 @@ import { AISettingsPage } from "./pages/AISettingsPage";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
+import { About } from "./pages/About";
+import { Contact } from "./pages/Contact";
+import { Privacy } from "./pages/Privacy";
+import { Terms } from "./pages/Terms";
+import { FAQ } from "./pages/FAQ";
 import TestRunner from "./test-runner";
 import { MobileOptimizedFieldDashboard } from "./components/soilsati/MobileOptimizedFieldDashboard";
 import { AIAdvisorFAB } from "./components/layout/AIAdvisorFAB";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import CropRotation from "./pages/CropRotation";
 import { MandiPrices } from "./pages/MandiPrices";
+import YieldPrediction from "./pages/YieldPrediction";
+import JalSaathi from "./pages/JalSaathi";
+import AIAdvisor from "./pages/AIAdvisor";
 import { blackBoxService } from "@/lib/blackBoxService";
 import { supabaseAnalyticsService } from "@/lib/supabaseAnalyticsService";
 import { pwaService } from "@/lib/pwaService";
@@ -68,11 +77,16 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
+              <Route path="/" element={<HomePage />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/faq" element={<FAQ />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               
               {/* Protected routes */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
               <Route path="/soilsati" element={<ProtectedRoute><SoilSati /></ProtectedRoute>} />
@@ -87,7 +101,11 @@ const App = () => {
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="/schemes" element={<ProtectedRoute><Schemes /></ProtectedRoute>} />
               <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
+              <Route path="/jal-saathi" element={<ProtectedRoute><JalSaathi /></ProtectedRoute>} />
               <Route path="/mandi-prices" element={<ProtectedRoute><MandiPrices /></ProtectedRoute>} />
+              <Route path="/ai-advisor" element={<ProtectedRoute><AIAdvisor /></ProtectedRoute>} />
+              <Route path="/crop-rotation" element={<ProtectedRoute><CropRotation /></ProtectedRoute>} />
+              <Route path="/yield-prediction" element={<ProtectedRoute><YieldPrediction /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/settings/ai" element={<ProtectedRoute><AISettingsPage /></ProtectedRoute>} />
               <Route path="/test" element={<TestRunner />} />

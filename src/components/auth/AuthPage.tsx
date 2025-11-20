@@ -87,10 +87,11 @@ export default function AuthPage() {
                 });
 
                 // Flush current session BlackBox logs to Supabase as user's personal memory
+                // Silently fail if table doesn't exist
                 try {
                     await supabaseBlackBoxService.flushCurrentSession();
                 } catch (syncError) {
-                    console.error('BlackBox sync after sign-in failed:', syncError);
+                    console.warn('BlackBox sync skipped (table may not exist):', syncError);
                 }
 
                 navigate('/dashboard');

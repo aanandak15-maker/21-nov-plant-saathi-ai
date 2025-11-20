@@ -79,11 +79,14 @@ export const NotificationsView = () => {
   const loadFieldsFromStorage = async () => {
     try {
       // Load fields from Supabase
-      const fields = await supabaseFieldService.getFields();
+      const allFields = await supabaseFieldService.getFields();
+      
+      // Filter out archived fields
+      const activeFields = allFields.filter((field: any) => field.status !== 'archived');
       
       // Enrich each field with latest field data
       const enrichedFields = await Promise.all(
-        fields.map(async (field: any) => {
+        activeFields.map(async (field: any) => {
           try {
             const latestData = await supabaseFieldService.getLatestFieldData(field.id);
             if (latestData) {

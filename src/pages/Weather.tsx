@@ -1,10 +1,10 @@
-import { WeatherView } from "@/components/weather/WeatherView";
+import { FarmerFriendlyWeather } from "@/components/weather/farmer-friendly/FarmerFriendlyWeather";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 
 export default function Weather() {
   return (
     <>
-      <WeatherView />
+      <FarmerFriendlyWeather />
       <BottomNavigation />
     </>
   );

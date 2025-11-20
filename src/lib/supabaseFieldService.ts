@@ -23,7 +23,12 @@ export const supabaseFieldService = {
   // Create new field
   async createField(field: Omit<Field, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<Field | null> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) {
+      console.error('❌ No authenticated user found');
+      return null;
+    }
+
+    console.log('📝 Creating field with data:', { ...field, user_id: user.id });
 
     const { data, error } = await supabase
       .from('fields')
@@ -32,10 +37,17 @@ export const supabaseFieldService = {
       .single();
 
     if (error) {
-      console.error('Error creating field:', error);
+      console.error('❌ Error creating field:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        fullError: error
+      });
       return null;
     }
 
+    console.log('✅ Field created successfully:', data);
     return data;
   },
 
@@ -112,7 +124,7 @@ export const supabaseFieldService = {
       .eq('field_id', fieldId)
       .order('timestamp', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to handle 0 rows gracefully
 
     if (error) {
       console.error('Error fetching latest field data:', error);

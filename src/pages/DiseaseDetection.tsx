@@ -1,11 +1,11 @@
-import { DiseaseDetectionView } from "@/components/disease/DiseaseDetectionView";
+import { FarmerFriendlyDiseaseDetection } from "@/components/disease/farmer-friendly/FarmerFriendlyDiseaseDetection";
 import { AIAdvisorFAB } from "@/components/layout/AIAdvisorFAB";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 
 const DiseaseDetection = () => {
   return (
     <>
-      <DiseaseDetectionView />
+      <FarmerFriendlyDiseaseDetection />
       <AIAdvisorFAB />
       <BottomNavigation />
     </>

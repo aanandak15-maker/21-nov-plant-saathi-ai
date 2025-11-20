@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Coordinate Fix - Plant Saathi AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #718096;
+      margin-bottom: 30px;
+    }
+    .field-card {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+    .field-card.valid {
+      border-color: #48bb78;
+      background: #f0fff4;
+    }
+    .field-card.invalid {
+      border-color: #f56565;
+      background: #fff5f5;
+    }
+    .field-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+    .field-info {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .info-label {
+      font-size: 12px;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-value {
+      font-size: 16px;
+      color: #2d3748;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+    .status-valid {
+      background: #48bb78;
+      color: white;
+    }
+    .status-invalid {
+      background: #f56565;
+      color: white;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #5a67d8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    button:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #718096;
+    }
+    .spinner {
+      border: 3px solid #e2e8f0;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .summary {
+      background: #edf2f7;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .summary-label {
+      color: #4a5568;
+    }
+    .summary-value {
+      font-weight: 600;
+      color: #2d3748;
+    }
+    .map-preview {
+      width: 100%;
+      height: 200px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border: 2px solid #e2e8f0;
+    }
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .alert-warning {
+      background: #fef5e7;
+      border-left: 4px solid #f39c12;
+      color: #7d6608;
+    }
+    .alert-success {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      color: #155724;
+    }
+    .alert-error {
+      background: #f8d7da;
+      border-left: 4px solid #dc3545;
+      color: #721c24;
+    }
+    .sql-code {
+      background: #2d3748;
+      color: #68d391;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Field Coordinate Verification</h1>
+    <p class="subtitle">Check if your fields have valid coordinates for satellite data</p>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading field data from Supabase...</p>
+    </div>
+
+    <div id="content" style="display: none;">
+      <div id="summary" class="summary"></div>
+      <div id="alert"></div>
+      <div id="fields"></div>
+      <div id="actions" style="margin-top: 30px;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Initialize Supabase (replace with your actual credentials)
+    const SUPABASE_URL = 'https://your-project.supabase.co';
+    const SUPABASE_ANON_KEY = 'your-anon-key';
+
+    // Try to load from environment or prompt user
+    const supabaseUrl = prompt('Enter your Supabase URL:', SUPABASE_URL) || SUPABASE_URL;
+    const supabaseKey = prompt('Enter your Supabase Anon Key:', SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    async function checkFields() {
+      try {
+        // Fetch all fields
+        const { data: fields, error } = await supabaseClient
+          .from('fields')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        if (!fields || fields.length === 0) {
+          document.getElementById('alert').innerHTML = `
+            <div class="alert alert-warning">
+              <strong>No fields found!</strong> Create your first field in the app.
+            </div>
+          `;
+          return;
+        }
+
+        // Analyze fields
+        const validFields = fields.filter(f => 
+          f.latitude && f.longitude && 
+          f.latitude !== 0 && f.longitude !== 0
+        );
+        const invalidFields = fields.filter(f => 
+          !f.latitude || !f.longitude || 
+          f.latitude === 0 || f.longitude === 0
+        );
+
+        // Show summary
+        document.getElementById('summary').innerHTML = `
+          <div class="summary-item">
+            <span class="summary-label">Total Fields:</span>
+            <span class="summary-value">${fields.length}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Valid Coordinates:</span>
+            <span class="summary-value" style="color: #48bb78;">${validFields.length}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Invalid Coordinates:</span>
+            <span class="summary-value" style="color: #f56565;">${invalidFields.length}</span>
+          </div>
+        `;
+
+        // Show alert if there are invalid fields
+        if (invalidFields.length > 0) {
+          document.getElementById('alert').innerHTML = `
+            <div class="alert alert-warning">
+              <strong>⚠️ Action Required!</strong> ${invalidFields.length} field(s) have invalid coordinates (0.0000°N, 0.0000°E).
+              Satellite data will not work for these fields. Run the SQL fix below to correct this.
+            </div>
+          `;
+        } else {
+          document.getElementById('alert').innerHTML = `
+            <div class="alert alert-success">
+              <strong>✅ All Good!</strong> All fields have valid coordinates. Satellite data should work correctly.
+            </div>
+          `;
+        }
+
+        // Display fields
+        const fieldsHtml = fields.map(field => {
+          const isValid = field.latitude && field.longitude && 
+                         field.latitude !== 0 && field.longitude !== 0;
+          const statusClass = isValid ? 'valid' : 'invalid';
+          const statusBadge = isValid ? 
+            '<span class="status-badge status-valid">✅ Valid</span>' :
+            '<span class="status-badge status-invalid">❌ Invalid</span>';
+
+          return `
+            <div class="field-card ${statusClass}">
+              <div class="field-name">
+                ${field.name}
+                ${statusBadge}
+              </div>
+              <div class="field-info">
+                <div class="info-item">
+                  <span class="info-label">Latitude</span>
+                  <span class="info-value">${field.latitude || 'Not set'}°N</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Longitude</span>
+                  <span class="info-value">${field.longitude || 'Not set'}°E</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Location</span>
+                  <span class="info-value">${field.location || 'Not set'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Crop Type</span>
+                  <span class="info-value">${field.crop_type || 'Not set'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Field Size</span>
+                  <span class="info-value">${field.field_size || 0} hectares</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Created</span>
+                  <span class="info-value">${new Date(field.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+              ${isValid ? `
+                <iframe 
+                  class="map-preview"
+                  frameborder="0"
+                  src="https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_KEY&q=${field.latitude},${field.longitude}&zoom=15&maptype=satellite"
+                ></iframe>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+        document.getElementById('fields').innerHTML = fieldsHtml;
+
+        // Show actions
+        if (invalidFields.length > 0) {
+          const fieldIds = invalidFields.map(f => `'${f.id}'`).join(', ');
+          document.getElementById('actions').innerHTML = `
+            <h3>🔧 Fix Invalid Coordinates</h3>
+            <p>Run this SQL in your Supabase SQL Editor:</p>
+            <div class="sql-code">
+UPDATE fields<br>
+SET <br>
+&nbsp;&nbsp;latitude = 28.3670,<br>
+&nbsp;&nbsp;longitude = 77.5673,<br>
+&nbsp;&nbsp;location = 'Dankaur, Uttar Pradesh, India'<br>
+WHERE id IN (${fieldIds});
+            </div>
+            <p style="margin-top: 20px;">
+              <button onclick="window.open('${supabaseUrl.replace('//', '//')}/project/_/sql', '_blank')">
+                Open Supabase SQL Editor
+              </button>
+              <button onclick="location.reload()">
+                Refresh After Fix
+              </button>
+            </p>
+          `;
+        } else {
+          document.getElementById('actions').innerHTML = `
+            <h3>🎉 Everything Looks Good!</h3>
+            <p>All your fields have valid coordinates. You can now:</p>
+            <p>
+              <button onclick="window.open('https://plant-saathi-ai.vercel.app/', '_blank')">
+                Open Plant Saathi AI
+              </button>
+              <button onclick="location.reload()">
+                Refresh Data
+              </button>
+            </p>
+          `;
+        }
+
+      } catch (error) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        document.getElementById('alert').innerHTML = `
+          <div class="alert alert-error">
+            <strong>❌ Error!</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    // Run check on load
+    checkFields();
+  </script>
+</body>
+</html>

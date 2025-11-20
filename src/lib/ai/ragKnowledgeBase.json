@@ -1,0 +1,196 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2024-11-20",
+  "categories": [
+    "disease_detection",
+    "soil_health",
+    "irrigation",
+    "fertilizer",
+    "marketplace",
+    "mandi_price",
+    "crop_rotation",
+    "pest_management",
+    "general_advisory"
+  ],
+  "examples": [
+    {
+      "id": "disease_001",
+      "question": "gehu ke patte pe brown spot hai",
+      "question_variants": [
+        "wheat leaves brown spots",
+        "गेहूं के पत्ते पर भूरे धब्बे",
+        "wheat leaf disease brown"
+      ],
+      "context_required": ["crop", "location", "weather", "field_ndvi"],
+      "answer_template": "🦠 **{disease_name} detect hui hai** (confidence: {confidence}%)\n\n**Turant karein:**\n- {action_1}\n- {action_2}\n- {action_3}\n\n**Recovery time:** {recovery_days} din\n**Yield loss:** {yield_loss}% (agar turant treat nahi kiya)\n\n📸 **{follow_up_1}**\n🤔 **{follow_up_2}**",
+      "metadata": {
+        "category": "disease_detection",
+        "language": "hi",
+        "confidence_threshold": 0.85,
+        "follow_up_questions": [
+          "Ek aur photo bhej sakte ho? (close-up)",
+          "Ye problem kitne din se hai?"
+        ],
+        "data_collection_strategy": {
+          "visual_training": "disease_progression_images",
+          "temporal_pattern": "onset_to_detection_lag"
+        }
+      }
+    },
+    {
+      "id": "soil_002",
+      "question": "meri fasal slow badh rahi hai",
+      "question_variants": [
+        "crop growing slowly",
+        "फसल धीरे बढ़ रही है",
+        "slow crop growth"
+      ],
+      "context_required": ["field_id", "crop", "ndvi_current", "soil_npk"],
+      "answer_template": "⚠️ **NDVI bahut kam hai** - {ndvi_current} (hona chahiye {ndvi_expected}+)\n\n**Main problem:** {problem_identified}\n\n**Turant solution:**\n- {solution_1}\n- {solution_2}\n- {solution_3}\n\n**{timeline} mein NDVI badh jayega** 📈\n\n💬 **{follow_up_1}**\n🌾 **{follow_up_2}**",
+      "metadata": {
+        "category": "soil_health",
+        "language": "hi",
+        "confidence_threshold": 0.90,
+        "follow_up_questions": [
+          "Patte ka color kaisa hai - pila ya sukha?",
+          "Last time kab fertilizer daala tha?"
+        ],
+        "data_collection_strategy": {
+          "ndvi_correlation": "visual_symptoms_mapping",
+          "fertilizer_effectiveness": "brand_timing_quantity"
+        }
+      }
+    },
+    {
+      "id": "irrigation_003",
+      "question": "aaj pani daalun?",
+      "question_variants": [
+        "should I irrigate today",
+        "आज सिंचाई करूं",
+        "water field today"
+      ],
+      "context_required": ["field_location", "crop", "soil_moisture", "weather_forecast"],
+      "answer_template": "🌧️ **{recommendation}**\n\n**Weather forecast:**\n- Kal: {rain_tomorrow}mm rain\n- Parson: {rain_day_after}mm rain\n- **Total: {total_rain}mm** (kaafi hai)\n\n**Action:**\n{action_icon} {action_text}\n💰 **₹{savings} bachega** (diesel/bijli)\n\n**Soil moisture:** {current_moisture}% → {expected_moisture}%+ hoga\n\n📍 **{follow_up_1}**\n⏰ **{follow_up_2}**",
+      "metadata": {
+        "category": "irrigation",
+        "language": "hi",
+        "confidence_threshold": 0.89,
+        "follow_up_questions": [
+          "Aapke gaon mein abhi tak barish hui thi recent mein?",
+          "Usually subah ya sham ko pani dete ho?"
+        ],
+        "data_collection_strategy": {
+          "weather_accuracy": "ground_truth_validation",
+          "irrigation_behavior": "time_of_day_patterns"
+        }
+      }
+    },
+    {
+      "id": "marketplace_004",
+      "question": "khad chahiye nitrogen ki",
+      "question_variants": [
+        "need nitrogen fertilizer",
+        "नाइट्रोजन खाद चाहिए",
+        "urea fertilizer needed"
+      ],
+      "context_required": ["field_npk", "crop", "location", "budget"],
+      "answer_template": "💊 **Nitrogen deficiency critical hai**\n\n**Top recommendations:**\n\n1. **{product_1_name}** - ₹{product_1_price} ⭐{product_1_rating}\n   - {product_1_benefit}\n   - [Buy now - {delivery_days} days]\n\n2. **{product_2_name}** - ₹{product_2_price} ⭐{product_2_rating}\n   - {product_2_benefit}\n   - [Add to cart]\n\n**Application:** {application_instructions}\n\n🛒 **{follow_up_1}**\n📦 **{follow_up_2}**",
+      "metadata": {
+        "category": "marketplace",
+        "language": "hi",
+        "confidence_threshold": 0.87,
+        "follow_up_questions": [
+          "Pehle kis company ki urea use karte the?",
+          "50kg bag theek hai ya 25kg lena hai?"
+        ],
+        "data_collection_strategy": {
+          "brand_loyalty": "regional_trust_patterns",
+          "economic_behavior": "farm_size_budget_correlation"
+        }
+      }
+    },
+    {
+      "id": "mandi_005",
+      "question": "gehu ka rate kya chal raha hai?",
+      "question_variants": [
+        "wheat price today",
+        "गेहूं का भाव क्या है",
+        "current wheat mandi rate"
+      ],
+      "context_required": ["crop", "location", "harvest_ready", "quantity"],
+      "answer_template": "💰 **{crop} ka aaj ka bhav:**\n\n**Aapke paas ke mandis:**\n- **{mandi_1}:** ₹{price_1}/quintal {trend_1}\n- **{mandi_2}:** ₹{price_2}/quintal {trend_2}\n- **{mandi_3}:** ₹{price_3}/quintal {trend_3}\n\n**Price trend:** {overall_trend}\n**30-day avg:** ₹{avg_price}\n\n**AI Suggestion:**\n{recommendation_icon} **{recommendation_text}**\n\n**{quantity} quintal = ₹{total_value}** ({best_mandi} rate pe)\n\n📍 **{follow_up_1}**\n🚜 **{follow_up_2}**",
+      "metadata": {
+        "category": "mandi_price",
+        "language": "hi",
+        "confidence_threshold": 0.90,
+        "follow_up_questions": [
+          "Aap usually kis mandi mein bechte ho?",
+          "Transport arrange hai ya chahiye?"
+        ],
+        "data_collection_strategy": {
+          "selling_pattern": "mandi_preference_by_location",
+          "logistics": "transport_cost_analysis"
+        }
+      }
+    }
+  ],
+  "response_patterns": {
+    "disease_detection": {
+      "format": "emoji + diagnosis + confidence + actions + timeline + follow_ups",
+      "emojis": ["🦠", "🐛", "⚠️", "📸"],
+      "tone": "urgent_but_reassuring",
+      "max_length": 150
+    },
+    "soil_health": {
+      "format": "problem + solution + timeline + visual_cues",
+      "emojis": ["⚠️", "🌾", "💬", "📈"],
+      "tone": "analytical_helpful",
+      "max_length": 120
+    },
+    "irrigation": {
+      "format": "recommendation + weather_data + cost_savings + follow_ups",
+      "emojis": ["🌧️", "💧", "💰", "📍"],
+      "tone": "practical_money_conscious",
+      "max_length": 130
+    },
+    "marketplace": {
+      "format": "problem + products + prices + ratings + cta",
+      "emojis": ["💊", "🛒", "📦", "⭐"],
+      "tone": "helpful_salesperson",
+      "max_length": 140
+    },
+    "mandi_price": {
+      "format": "prices + trend + recommendation + earnings + logistics",
+      "emojis": ["💰", "📈", "📍", "🚜"],
+      "tone": "business_advisor",
+      "max_length": 150
+    }
+  },
+  "follow_up_strategies": {
+    "visual_confirmation": [
+      "Ek aur photo bhej sakte ho?",
+      "Close-up image mil sakti hai?",
+      "Poore field ki photo hai?"
+    ],
+    "temporal_context": [
+      "Ye problem kitne din se hai?",
+      "Pichli baar kab dekha tha?",
+      "Kab se shuru hua?"
+    ],
+    "spatial_pattern": [
+      "Poore field mein hai ya kuch areas mein?",
+      "Kis taraf zyada hai?",
+      "Boundary pe zyada hai ya beech mein?"
+    ],
+    "historical_practice": [
+      "Pehle kya use karte the?",
+      "Last time kab daala tha?",
+      "Kitni quantity mein daalte ho?"
+    ],
+    "economic_constraint": [
+      "Budget kitna hai?",
+      "Cash ki urgent need hai?",
+      "Transport arrange hai?"
+    ]
+  }
+}

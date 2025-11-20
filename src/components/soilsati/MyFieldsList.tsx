@@ -24,6 +24,7 @@ export const MyFieldsList = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [fields, setFields] = useState<Field[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Load fields from Supabase
   useEffect(() => {
@@ -141,6 +142,14 @@ export const MyFieldsList = () => {
     }
   };
 
+  // Filter fields based on showHistory toggle
+  const filteredFields = showHistory 
+    ? fields.filter((f: any) => f.status === 'harvested' || f.status === 'dormant')
+    : fields.filter((f: any) => !f.status || f.status === 'active');
+
+  const activeCount = fields.filter((f: any) => !f.status || f.status === 'active').length;
+  const historyCount = fields.filter((f: any) => f.status === 'harvested' || f.status === 'dormant').length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -154,24 +163,50 @@ export const MyFieldsList = () => {
         </Button>
       </div>
 
-      {fields.length === 0 ? (
+      {/* Toggle between Active and History */}
+      <div className="flex gap-2">
+        <Button
+          variant={!showHistory ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowHistory(false)}
+          className={!showHistory ? "bg-green-600 hover:bg-green-700" : ""}
+        >
+          🌱 Active ({activeCount})
+        </Button>
+        <Button
+          variant={showHistory ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowHistory(true)}
+          className={showHistory ? "bg-amber-600 hover:bg-amber-700" : ""}
+        >
+          📦 History ({historyCount})
+        </Button>
+      </div>
+
+      {filteredFields.length === 0 ? (
         <Card className="p-8 text-center bg-card/50">
           <Sprout className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">{t('no_fields_yet')}</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            {showHistory ? 'No fields in history' : t('no_fields_yet')}
+          </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            {t('start_mapping_first_field')}
+            {showHistory 
+              ? 'Archived fields will appear here' 
+              : t('start_mapping_first_field')}
           </p>
-          <Button
-            onClick={() => navigate("/soilsati/map-field")}
-            className="bg-gradient-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {t('map_first_field')}
-          </Button>
+          {!showHistory && (
+            <Button
+              onClick={() => navigate("/soilsati/map-field")}
+              className="bg-gradient-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {t('map_first_field')}
+            </Button>
+          )}
         </Card>
       ) : (
         <div className="space-y-3">
-          {fields.map((field) => (
+          {filteredFields.map((field) => (
             <Card 
               key={field.id}
               className="p-4 bg-card hover:shadow-lg transition-shadow cursor-pointer"
@@ -246,12 +281,77 @@ export const MyFieldsList = () => {
                 </div>
               </div>
 
-              <Button variant="outline" size="sm" className="w-full" onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/soilsati/field/${field.id}`);
-              }}>
-                View Details →
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/soilsati/field/${field.id}`);
+                }}>
+                  View Details →
+                </Button>
+                {((field as any).status === 'active' || !(field as any).status) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300 font-medium"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm(`फसल कट गई? / Crop Harvested?\n\n"${field.name}"\n\n✅ इतिहास में जाएगा / Will move to history\n✅ निगरानी बंद होगी / Monitoring will stop\n✅ नई फसल के लिए फिर शुरू कर सकते हैं / Can restart for new crop\n\nहाँ? / Yes?`)) {
+                        try {
+                          const { fieldLifecycleService } = await import('@/lib/fieldLifecycleService');
+                          await fieldLifecycleService.confirmHarvest(field.id, {
+                            notes: 'Farmer marked as harvested from field list'
+                          });
+                          // Reload fields
+                          const updatedFields = await supabaseFieldService.getFields();
+                          setFields(updatedFields.map((f: any) => ({
+                            ...f,
+                            cropType: f.crop_type || 'Unknown',
+                            sowingDate: f.created_at || new Date().toISOString(),
+                            health: { ndvi: 0, status: "unknown" as const }
+                          })));
+                        } catch (error) {
+                          console.error('Failed to archive field:', error);
+                          alert('समस्या आई। फिर कोशिश करें। / Problem occurred. Try again.');
+                        }
+                      }
+                    }}
+                  >
+                    🌾 कट गई / Harvested
+                  </Button>
+                )}
+                {((field as any).status === 'harvested' || (field as any).status === 'dormant') && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300 font-medium"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const newCrop = prompt(`"${field.name}" में नई फसल बोएं\nStart New Crop in "${field.name}"\n\nनई फसल का नाम / New crop name:\n(धान, गेहूं, मक्का / Rice, Wheat, Corn)`);
+                      if (newCrop && newCrop.trim()) {
+                        try {
+                          const { fieldLifecycleService } = await import('@/lib/fieldLifecycleService');
+                          await fieldLifecycleService.reactivateField(field.id, newCrop.trim(), {
+                            reactivationReason: 'New crop sowing started'
+                          });
+                          // Reload fields
+                          const updatedFields = await supabaseFieldService.getFields();
+                          setFields(updatedFields.map((f: any) => ({
+                            ...f,
+                            cropType: f.crop_type || 'Unknown',
+                            sowingDate: f.created_at || new Date().toISOString(),
+                            health: { ndvi: 0, status: "unknown" as const }
+                          })));
+                        } catch (error) {
+                          console.error('Failed to reactivate field:', error);
+                          alert('Failed to reactivate field. Please try again.');
+                        }
+                      }
+                    }}
+                  >
+                    🌱 Reactivate
+                  </Button>
+                )}
+              </div>
             </Card>
           ))}
         </div>

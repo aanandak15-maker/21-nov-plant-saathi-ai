@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
-import { DashboardView } from "@/components/dashboard/DashboardView";
+import { FarmerFriendlyDashboard } from "@/components/dashboard/FarmerFriendlyDashboard";
 import { blackBoxService } from "@/lib/blackBoxService";
 
 const Dashboard = () => {
@@ -17,7 +17,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white pb-20">
-      <DashboardView />
+      <FarmerFriendlyDashboard />
       <BottomNavigation />
     </div>
   );

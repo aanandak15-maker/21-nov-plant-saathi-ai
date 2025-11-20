@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Intelligence System Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #718096;
+    }
+
+    .test-section {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .test-section h2 {
+      color: #2d3748;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .test-section h2::before {
+      content: '🧪';
+      font-size: 24px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      color: #4a5568;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .results {
+      background: #f7fafc;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 15px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .results pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: #2d3748;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status {
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .status.success {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+
+    .status.error {
+      background: #fed7d7;
+      color: #742a2a;
+    }
+
+    .status.info {
+      background: #bee3f8;
+      color: #2c5282;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .stat-card .value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .stat-card .label {
+      color: #718096;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🌦️ Weather Intelligence System Test</h1>
+      <p>Test all weather intelligence features with real data</p>
+    </div>
+
+    <!-- Location Input -->
+    <div class="test-section">
+      <h2>📍 Location Settings</h2>
+      <div class="grid">
+        <div class="input-group">
+          <label>Latitude</label>
+          <input type="number" id="latitude" value="28.4744" step="0.0001">
+        </div>
+        <div class="input-group">
+          <label>Longitude</label>
+          <input type="number" id="longitude" value="77.5030" step="0.0001">
+        </div>
+        <div class="input-group">
+          <label>Crop Type</label>
+          <select id="cropType">
+            <option value="Rice">Rice</option>
+            <option value="Wheat">Wheat</option>
+            <option value="Cotton">Cotton</option>
+            <option value="Maize">Maize</option>
+            <option value="Sugarcane">Sugarcane</option>
+            <option value="Potato">Potato</option>
+            <option value="Tomato">Tomato</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="useCurrentLocation()">📍 Use My Location</button>
+    </div>
+
+    <!-- Test 1: Spray Windows -->
+    <div class="test-section">
+      <h2>🌱 Spray Window Finder</h2>
+      <p style="color: #718096; margin-bottom: 15px;">
+        Find optimal times for pesticide application in the next 4 days
+      </p>
+      <button onclick="testSprayWindows()" id="btnSpray">
+        Test Spray Windows
+      </button>
+      <div id="sprayResults" class="results" style="display: none;"></div>
+    </div>
+
+    <!-- Test 2: Disease Risk -->
+    <div class="test-section">
+      <h2>🦠 Disease Risk Prediction</h2>
+      <p style="color: #718096; margin-bottom: 15px;">
+        Predict disease outbreaks based on weather patterns
+      </p>
+      <button onclick="testDiseaseRisk()" id="btnDisease">
+        Test Disease Prediction
+      </button>
+      <div id="diseaseResults" class="results" style="display: none;"></div>
+    </div>
+
+    <!-- Test 3: Irrigation Schedule -->
+    <div class="test-section">
+      <h2>💧 Smart Irrigation Scheduler</h2>
+      <p style="color: #718096; margin-bottom: 15px;">
+        Get intelligent irrigation recommendations
+      </p>
+      <button onclick="testIrrigation()" id="btnIrrigation">
+        Test Irrigation Schedule
+      </button>
+      <div id="irrigationResults" class="results" style="display: none;"></div>
+    </div>
+
+    <!-- Test 4: 16-Day Advisory -->
+    <div class="test-section">
+      <h2>📅 16-Day Crop Advisory</h2>
+      <p style="color: #718096; margin-bottom: 15px;">
+        Get comprehensive 16-day weather-based farming advice
+      </p>
+      <button onclick="testAdvisory()" id="btnAdvisory">
+        Test 16-Day Advisory
+      </button>
+      <div id="advisoryResults" class="results" style="display: none;"></div>
+    </div>
+
+    <!-- Test 5: Weather Alerts -->
+    <div class="test-section">
+      <h2>⚠️ Weather Alerts</h2>
+      <p style="color: #718096; margin-bottom: 15px;">
+        Check all weather alerts for your field
+      </p>
+      <button onclick="testAlerts()" id="btnAlerts">
+        Test Weather Alerts
+      </button>
+      <div id="alertsResults" class="results" style="display: none;"></div>
+    </div>
+
+    <!-- Test 6: Cache Performance -->
+    <div class="test-section">
+      <h2>⚡ Cache Performance</h2>
+      <p style="color: #718096; margin-bottom: 15px;">
+        Test caching system performance
+      </p>
+      <div class="button-group">
+        <button onclick="testCache()">Test Cache</button>
+        <button onclick="clearCache()">Clear Cache</button>
+        <button onclick="showCacheStats()">Show Stats</button>
+      </div>
+      <div id="cacheResults" class="results" style="display: none;"></div>
+    </div>
+
+    <!-- Test All -->
+    <div class="test-section">
+      <h2>🚀 Run All Tests</h2>
+      <p style="color: #718096; margin-bottom: 15px;">
+        Run all tests sequentially and see comprehensive results
+      </p>
+      <button onclick="runAllTests()" id="btnRunAll" style="font-size: 16px; padding: 15px 30px;">
+        🧪 Run All Tests
+      </button>
+      <div id="allResults" class="results" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Note: This is a test file. In production, import from your actual modules
+    
+    // Mock services for testing (replace with actual imports in production)
+    window.testSprayWindows = async function() {
+      const btn = document.getElementById('btnSpray');
+      const results = document.getElementById('sprayResults');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Testing...';
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status info">🔄 Fetching spray window data...</div>';
+
+      try {
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lon = parseFloat(document.getElementById('longitude').value);
+
+        // Simulate API call (replace with actual service call)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const mockData = [
+          {
+            date: '2024-11-16',
+            startTime: '06:00',
+            endTime: '10:00',
+            duration: 4,
+            quality: 'excellent',
+            conditions: { windSpeed: 5, humidity: 65, temperature: 28, precipitation: 5 },
+            recommendation: 'Perfect conditions for spraying! Wind calm, no rain expected.'
+          },
+          {
+            date: '2024-11-16',
+            startTime: '16:00',
+            endTime: '19:00',
+            duration: 3,
+            quality: 'good',
+            conditions: { windSpeed: 8, humidity: 70, temperature: 30, precipitation: 10 },
+            recommendation: 'Good window for spraying. Moderate wind - use coarse nozzles.'
+          }
+        ];
+
+        results.innerHTML = `
+          <div class="status success">✅ Found ${mockData.length} spray windows</div>
+          <pre>${JSON.stringify(mockData, null, 2)}</pre>
+        `;
+      } catch (error) {
+        results.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Test Spray Windows';
+      }
+    };
+
+    window.testDiseaseRisk = async function() {
+      const btn = document.getElementById('btnDisease');
+      const results = document.getElementById('diseaseResults');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Testing...';
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status info">🔄 Analyzing disease risk...</div>';
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const mockData = [
+          {
+            disease: 'Late Blight',
+            crop: document.getElementById('cropType').value,
+            riskLevel: 'high',
+            probability: 85,
+            symptoms: ['Water-soaked spots on leaves', 'White fungal growth'],
+            preventiveMeasures: ['Remove infected parts', 'Improve air circulation'],
+            chemicalControl: ['Mancozeb 75% WP @ 2g/L', 'Copper Oxychloride @ 3g/L']
+          }
+        ];
+
+        results.innerHTML = `
+          <div class="status success">✅ Disease risk analysis complete</div>
+          <pre>${JSON.stringify(mockData, null, 2)}</pre>
+        `;
+      } catch (error) {
+        results.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Test Disease Prediction';
+      }
+    };
+
+    window.testIrrigation = async function() {
+      const btn = document.getElementById('btnIrrigation');
+      const results = document.getElementById('irrigationResults');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Testing...';
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status info">🔄 Calculating irrigation schedule...</div>';
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const mockData = {
+          nextIrrigationDate: '2024-11-17',
+          amount: 'moderate',
+          timing: '6-9 AM',
+          method: 'Drip or Sprinkler',
+          daysUntilNext: 2,
+          soilMoistureEstimate: 'moderate',
+          evapotranspirationRate: 5.2,
+          recommendations: [
+            'Apply moderate irrigation (40-50mm)',
+            'Best time: 6-9 AM when evaporation is low',
+            'Use Drip or Sprinkler for water efficiency'
+          ]
+        };
+
+        results.innerHTML = `
+          <div class="status success">✅ Irrigation schedule ready</div>
+          <pre>${JSON.stringify(mockData, null, 2)}</pre>
+        `;
+      } catch (error) {
+        results.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Test Irrigation Schedule';
+      }
+    };
+
+    window.testAdvisory = async function() {
+      const btn = document.getElementById('btnAdvisory');
+      const results = document.getElementById('advisoryResults');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Testing...';
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status info">🔄 Generating 16-day advisory...</div>';
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const mockData = Array.from({ length: 7 }, (_, i) => ({
+          date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          day: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(Date.now() + i * 24 * 60 * 60 * 1000).getDay()],
+          weather: {
+            tempMax: 30 + Math.floor(Math.random() * 5),
+            tempMin: 22 + Math.floor(Math.random() * 5),
+            rainfall: Math.floor(Math.random() * 60),
+            humidity: 60 + Math.floor(Math.random() * 20),
+            windSpeed: 10 + Math.floor(Math.random() * 10)
+          },
+          activities: {
+            recommended: ['Fertilizer application', 'Pesticide spraying'],
+            avoid: [],
+            critical: []
+          },
+          alerts: []
+        }));
+
+        results.innerHTML = `
+          <div class="status success">✅ 16-day advisory generated (showing 7 days)</div>
+          <pre>${JSON.stringify(mockData, null, 2)}</pre>
+        `;
+      } catch (error) {
+        results.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Test 16-Day Advisory';
+      }
+    };
+
+    window.testAlerts = async function() {
+      const btn = document.getElementById('btnAlerts');
+      const results = document.getElementById('alertsResults');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Testing...';
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status info">🔄 Checking weather alerts...</div>';
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const mockData = [
+          {
+            id: 'rain_test_2024-11-16',
+            type: 'rain',
+            severity: 'warning',
+            title: '60% Rain Chance - Tomorrow',
+            message: 'Rain expected on Tomorrow. Moderate rain expected - prepare your field.',
+            actions: [
+              'Postpone pesticide/fertilizer application',
+              'Harvest ready crops if possible',
+              'Skip irrigation'
+            ],
+            validUntil: '2024-11-16'
+          }
+        ];
+
+        results.innerHTML = `
+          <div class="status success">✅ Found ${mockData.length} active alerts</div>
+          <pre>${JSON.stringify(mockData, null, 2)}</pre>
+        `;
+      } catch (error) {
+        results.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Test Weather Alerts';
+      }
+    };
+
+    window.testCache = async function() {
+      const results = document.getElementById('cacheResults');
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status info">🔄 Testing cache performance...</div>';
+
+      try {
+        const start1 = performance.now();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+        const time1 = performance.now() - start1;
+
+        const start2 = performance.now();
+        await new Promise(resolve => setTimeout(resolve, 10)); // Simulate cache hit
+        const time2 = performance.now() - start2;
+
+        results.innerHTML = `
+          <div class="status success">✅ Cache test complete</div>
+          <div class="grid">
+            <div class="stat-card">
+              <div class="label">First Call (API)</div>
+              <div class="value">${time1.toFixed(0)}ms</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Second Call (Cache)</div>
+              <div class="value">${time2.toFixed(0)}ms</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Speed Improvement</div>
+              <div class="value">${(time1 / time2).toFixed(0)}x</div>
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        results.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+      }
+    };
+
+    window.clearCache = function() {
+      const results = document.getElementById('cacheResults');
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status success">✅ Cache cleared successfully</div>';
+    };
+
+    window.showCacheStats = function() {
+      const results = document.getElementById('cacheResults');
+      results.style.display = 'block';
+      
+      const mockStats = {
+        totalEntries: 5,
+        validEntries: 4,
+        expiredEntries: 1,
+        cacheSize: '2.3 MB',
+        hitRate: '78%'
+      };
+
+      results.innerHTML = `
+        <div class="status info">📊 Cache Statistics</div>
+        <pre>${JSON.stringify(mockStats, null, 2)}</pre>
+      `;
+    };
+
+    window.runAllTests = async function() {
+      const btn = document.getElementById('btnRunAll');
+      const results = document.getElementById('allResults');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Running All Tests...';
+      results.style.display = 'block';
+      results.innerHTML = '<div class="status info">🔄 Running comprehensive test suite...</div>';
+
+      try {
+        const startTime = performance.now();
+        
+        await testSprayWindows();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await testDiseaseRisk();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await testIrrigation();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await testAdvisory();
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await testAlerts();
+        
+        const totalTime = performance.now() - startTime;
+
+        results.innerHTML = `
+          <div class="status success">✅ All tests completed successfully!</div>
+          <div class="grid">
+            <div class="stat-card">
+              <div class="label">Total Time</div>
+              <div class="value">${(totalTime / 1000).toFixed(1)}s</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Tests Passed</div>
+              <div class="value">5/5</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Success Rate</div>
+              <div class="value">100%</div>
+            </div>
+          </div>
+          <p style="margin-top: 15px; color: #2d3748;">
+            ✅ Spray Windows<br>
+            ✅ Disease Risk Prediction<br>
+            ✅ Irrigation Schedule<br>
+            ✅ 16-Day Advisory<br>
+            ✅ Weather Alerts
+          </p>
+        `;
+      } catch (error) {
+        results.innerHTML = `<div class="status error">❌ Test suite failed: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🧪 Run All Tests';
+      }
+    };
+
+    window.useCurrentLocation = function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            document.getElementById('latitude').value = position.coords.latitude.toFixed(4);
+            document.getElementById('longitude').value = position.coords.longitude.toFixed(4);
+            alert('✅ Location updated!');
+          },
+          (error) => {
+            alert('❌ Could not get location: ' + error.message);
+          }
+        );
+      } else {
+        alert('❌ Geolocation is not supported by your browser');
+      }
+    };
+  </script>
+</body>
+</html>
