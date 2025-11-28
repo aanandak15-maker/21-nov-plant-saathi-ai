@@ -113,14 +113,71 @@ export class BlackBoxService {
   private sessionStartTime: Date;
   private initialized = false;
 
+  private logBuffer: any[] = [];
+  private readonly FLUSH_INTERVAL = 60000; // 60 seconds
+  private readonly BUFFER_SIZE_LIMIT = 50; // Flush if buffer exceeds this size
+  private flushTimer: any;
+
   constructor() {
     // Defer heavy work until we know we're in a browser environment
     this.sessionId = this.generateSessionId();
     this.sessionStartTime = new Date();
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       this.safeInitializeSession();
+      this.startFlushInterval();
+
+      // Flush on unload
+      window.addEventListener('unload', () => this.flushLogs());
     }
   }
+
+  private startFlushInterval() {
+    if (this.flushTimer) clearInterval(this.flushTimer);
+    this.flushTimer = setInterval(() => this.flushLogs(), this.FLUSH_INTERVAL);
+  }
+
+  // ... (keep generateSessionId and safeInitializeSession)
+
+  // ... (keep all log methods: logVegetationIndicesView, logAudioInteraction, etc.)
+
+
+
+  /**
+   * Flush buffered logs to backend
+   */
+  async flushLogs(): Promise<void> {
+    if (this.logBuffer.length === 0) return;
+
+    const logsToSync = [...this.logBuffer];
+    this.logBuffer = []; // Clear buffer immediately
+
+    try {
+      // Dynamic import to avoid circular dependency if possible, or use the global service
+      // For now, we'll assume supabaseAnalyticsService is available or we dispatch a custom event
+      // Better: use a callback or event emitter pattern. 
+      // But to keep it simple, we will expose the buffer for the analytics service to pull, 
+      // OR we call the analytics service directly if imported.
+
+      // Since we can't easily import supabaseAnalyticsService here due to potential circular deps 
+      // (analytics service imports blackbox service), we'll use a custom event that the app listens to,
+      // OR we'll just rely on the fact that we are modifying the file and can add the import if needed.
+      // Actually, let's look at the imports. `supabaseAnalyticsService.ts` imports `blackBoxService`.
+      // So `blackBoxService.ts` CANNOT import `supabaseAnalyticsService`.
+
+      // Solution: Dispatch a custom event 'blackbox-flush' that the App or AnalyticsService listens to.
+      if (typeof window !== 'undefined') {
+        const event = new CustomEvent('blackbox-flush', { detail: logsToSync });
+        window.dispatchEvent(event);
+      }
+
+    } catch (error) {
+      console.error('Failed to flush logs:', error);
+      // Put logs back in buffer? No, risk of infinite loop. Just log error.
+    }
+  }
+
+  // ... (keep cleanupOldSessions, etc.)
+
 
   private generateSessionId(): string {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -470,11 +527,14 @@ export class BlackBoxService {
       const existingLogs = JSON.parse(localStorage.getItem(storageKey) || '[]');
 
       // Add new log
-      existingLogs.push({
+      const fullLog = {
         ...logData,
         sessionId: this.sessionId,
-        userId: this.userId
-      });
+        userId: this.userId,
+        logType // Add type for batch processing
+      };
+
+      existingLogs.push(fullLog);
 
       // Keep only last 50 logs per type to prevent quota exceeded
       const trimmedLogs = existingLogs.slice(-50);
@@ -484,19 +544,21 @@ export class BlackBoxService {
       } catch (quotaError) {
         // If still quota exceeded, clear old sessions and retry
         this.cleanupOldSessions();
-
-        // Try again with just the last 20 logs
-        const minimalLogs = existingLogs.slice(-20);
         try {
-          localStorage.setItem(storageKey, JSON.stringify(minimalLogs));
+          localStorage.setItem(storageKey, JSON.stringify(existingLogs.slice(-20)));
         } catch (retryError) {
-          // If still failing, just keep in memory
           console.warn('localStorage full, keeping logs in memory only');
         }
       }
 
-      // In a real implementation, this would also queue for backend sync
-      this.queueForBackendSync(logType, logData);
+      // Add to buffer for batch sync
+      this.logBuffer.push(fullLog);
+
+      // Flush immediately if buffer is full
+      if (this.logBuffer.length >= this.BUFFER_SIZE_LIMIT) {
+        this.flushLogs();
+      }
+
     } catch (error) {
       console.error('Failed to persist log:', error);
     }

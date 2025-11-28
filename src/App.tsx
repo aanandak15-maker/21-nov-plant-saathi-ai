@@ -43,12 +43,15 @@ import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const InlineSoilSati = () => <div className="p-10 text-black">Inline Component Defined in App.tsx</div>;
+
 
 const App = () => {
   useEffect(() => {
     // Initialize PWA
     pwaService.initialize().catch(console.error);
+
+    // Initialize Analytics Listener
+    supabaseAnalyticsService.initialize();
 
     // Initialize black box service and log app start
     blackBoxService.logUserInteraction('session_start', 'app_initialization', undefined, {

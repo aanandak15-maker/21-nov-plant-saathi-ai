@@ -7,15 +7,48 @@ import ee from '@google/earthengine';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Security: API Key for backend authentication
+const BACKEND_API_KEY = process.env.BACKEND_API_KEY || 'change-me-in-production';
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Rate Limiting: Prevent API abuse
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting to all API routes
+app.use('/api/', apiLimiter);
+
+// Authentication Middleware: Verify API key
+const authenticate = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+
+  if (!apiKey || apiKey !== BACKEND_API_KEY) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Valid API key required in x-api-key header'
+    });
+  }
+
+  next();
+};
+
+// Apply authentication to all API routes (except health check)
+app.use('/api/', authenticate);
 
 // Service account credentials
 const privateKey = {
@@ -253,6 +286,34 @@ app.post('/api/satellite/vegetation', async (req, res) => {
 // OpenWeather Proxy Endpoints
 const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
+// Simple in-memory cache
+const weatherCache = new Map();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+function getCachedData(key) {
+  const item = weatherCache.get(key);
+  if (item && Date.now() - item.timestamp < CACHE_DURATION) {
+    return item.data;
+  }
+  return null;
+}
+
+function setCachedData(key, data) {
+  weatherCache.set(key, {
+    timestamp: Date.now(),
+    data
+  });
+
+  // Cleanup old cache entries periodically
+  if (weatherCache.size > 1000) {
+    for (const [k, v] of weatherCache.entries()) {
+      if (Date.now() - v.timestamp > CACHE_DURATION) {
+        weatherCache.delete(k);
+      }
+    }
+  }
+}
+
 app.get('/api/weather/current', async (req, res) => {
   try {
     const { lat, lon, city } = req.query;
@@ -260,6 +321,14 @@ app.get('/api/weather/current', async (req, res) => {
 
     if (!apiKey) {
       return res.status(500).json({ error: 'OpenWeather API key not configured' });
+    }
+
+    // Generate cache key
+    const cacheKey = `current_${city || `${lat}_${lon}`}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      console.log(`📦 Serving cached current weather for: ${cacheKey}`);
+      return res.json(cached);
     }
 
     let url = '';
@@ -277,6 +346,7 @@ app.get('/api/weather/current', async (req, res) => {
     }
 
     const data = await response.json();
+    setCachedData(cacheKey, data); // Cache the result
     res.json(data);
   } catch (error) {
     console.error('❌ Error fetching current weather:', error);
@@ -291,6 +361,14 @@ app.get('/api/weather/forecast/daily', async (req, res) => {
 
     if (!apiKey) {
       return res.status(500).json({ error: 'OpenWeather API key not configured' });
+    }
+
+    // Generate cache key
+    const cacheKey = `daily_${city || `${lat}_${lon}`}_${cnt}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      console.log(`📦 Serving cached daily forecast for: ${cacheKey}`);
+      return res.json(cached);
     }
 
     let url = '';
@@ -313,6 +391,7 @@ app.get('/api/weather/forecast/daily', async (req, res) => {
     }
 
     const data = await response.json();
+    setCachedData(cacheKey, data); // Cache the result
     res.json(data);
   } catch (error) {
     console.error('❌ Error fetching daily forecast:', error);
@@ -327,6 +406,14 @@ app.get('/api/weather/forecast/hourly', async (req, res) => {
 
     if (!apiKey) {
       return res.status(500).json({ error: 'OpenWeather API key not configured' });
+    }
+
+    // Generate cache key
+    const cacheKey = `hourly_${city || `${lat}_${lon}`}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      console.log(`📦 Serving cached hourly forecast for: ${cacheKey}`);
+      return res.json(cached);
     }
 
     let url = '';
@@ -356,11 +443,13 @@ app.get('/api/weather/forecast/hourly', async (req, res) => {
         throw new Error(`OpenWeather API error: ${fallbackResponse.status}`);
       }
       const data = await fallbackResponse.json();
+      setCachedData(cacheKey, { ...data, isFallback: true }); // Cache the result
       res.json({ ...data, isFallback: true });
       return;
     }
 
     const data = await response.json();
+    setCachedData(cacheKey, data); // Cache the result
     res.json(data);
   } catch (error) {
     console.error('❌ Error fetching hourly forecast:', error);

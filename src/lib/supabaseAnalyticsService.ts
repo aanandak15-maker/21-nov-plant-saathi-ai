@@ -7,35 +7,64 @@ import { blackBoxService } from './blackBoxService';
  */
 export const supabaseAnalyticsService = {
   /**
-   * Log analytics event to both BlackBox and Supabase
+   * Initialize analytics service
+   */
+  initialize() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('blackbox-flush', (event: any) => {
+        this.handleBatchSync(event.detail);
+      });
+    }
+  },
+
+  /**
+   * Log analytics event to BlackBox (which will buffer and sync)
    */
   async logEvent(eventType: string, eventData: any) {
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // Log to BlackBox (real-time) - using correct method
+      // Log to BlackBox (real-time)
       blackBoxService.logUserInteraction(
         eventType as any,
         'analytics_event',
         undefined,
         eventData
       );
-      
-      // Log to Supabase (persistent storage)
-      const { error } = await supabase
-        .from('analytics_events')
-        .insert([{
-          user_id: user?.id || null,
-          event_type: eventType,
-          event_data: eventData
-        }]);
-      
-      if (error) {
-        console.error('Error logging to Supabase:', error);
-      }
+
+      // We NO LONGER insert directly to Supabase here to avoid write storms.
+      // The BlackBoxService will emit 'blackbox-flush' event periodically.
     } catch (error) {
       console.error('Analytics logging error:', error);
+    }
+  },
+
+  /**
+   * Handle batch sync from BlackBox buffer
+   */
+  async handleBatchSync(logs: any[]) {
+    if (!logs || logs.length === 0) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Transform logs to match analytics_events schema
+      const events = logs.map(log => ({
+        user_id: user?.id || log.userId || null,
+        event_type: log.logType || log.interactionType || 'unknown',
+        event_data: log,
+        created_at: log.timestamp
+      }));
+
+      const { error } = await supabase
+        .from('analytics_events')
+        .insert(events);
+
+      if (error) {
+        console.error('Error syncing batch to Supabase:', error);
+      } else {
+        console.log(`✅ Synced ${events.length} analytics events to Supabase`);
+      }
+    } catch (error) {
+      console.error('Batch sync error:', error);
     }
   },
 
@@ -92,7 +121,7 @@ export const supabaseAnalyticsService = {
     try {
       // Get BlackBox analytics summary
       const blackBoxData = blackBoxService.getAnalyticsSummary();
-      
+
       if (!blackBoxData) return;
 
       // Log summary as a single event

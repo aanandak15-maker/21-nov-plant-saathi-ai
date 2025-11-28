@@ -58,10 +58,39 @@ export interface WeatherData {
 
 export class WeatherService {
   private baseUrl: string;
+  private apiKey: string;
 
   constructor() {
     // Use the backend proxy URL (default to localhost:3001 if not set)
     this.baseUrl = import.meta.env.VITE_SATELLITE_PROXY_URL || 'http://localhost:3001';
+    this.apiKey = import.meta.env.VITE_BACKEND_API_KEY || '';
+
+    if (!this.apiKey) {
+      console.warn('⚠️ VITE_BACKEND_API_KEY not set. Backend requests may fail.');
+    }
+  }
+
+  /**
+   * Get headers with API key
+   */
+  private getHeaders(): HeadersInit {
+    return {
+      'Content-Type': 'application/json',
+      'x-api-key': this.apiKey
+    };
+  }
+
+  /**
+   * Fetch with authentication
+   */
+  private async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...this.getHeaders(),
+        ...options.headers
+      }
+    });
   }
 
   /**
@@ -70,7 +99,7 @@ export class WeatherService {
   async getWeatherByCity(city: string): Promise<WeatherData> {
     try {
       // Get current weather from backend
-      const currentResponse = await fetch(
+      const currentResponse = await this.authenticatedFetch(
         `${this.baseUrl}/api/weather/current?city=${encodeURIComponent(city)}`
       );
 
@@ -90,32 +119,67 @@ export class WeatherService {
     }
   }
 
+  private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+  private getCachedWeather(key: string): WeatherData | null {
+    try {
+      const cached = localStorage.getItem(`weather_cache_${key}`);
+      if (!cached) return null;
+
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < this.CACHE_DURATION) {
+        console.log(`📦 Using cached weather for ${key}`);
+        return data;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  private setCachedWeather(key: string, data: WeatherData): void {
+    try {
+      localStorage.setItem(`weather_cache_${key}`, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      console.warn('Failed to cache weather data', e);
+    }
+  }
+
   /**
    * Get weather by coordinates (16-day daily + hourly)
    */
   async getWeatherByCoords(lat: number, lon: number, cityName?: string): Promise<WeatherData> {
+    const cacheKey = `coords_${lat.toFixed(4)}_${lon.toFixed(4)}`; // More precise key for coords
+    const cached = this.getCachedWeather(cacheKey);
+    if (cached) return cached;
+
     try {
       console.log('📊 Fetching 16-day & hourly forecast from Backend Proxy');
 
       // 1. Get Current Weather
-      const currentResponse = await fetch(
+      const currentResponse = await this.authenticatedFetch(
         `${this.baseUrl}/api/weather/current?lat=${lat}&lon=${lon}`
       );
       const currentData = await currentResponse.json();
 
       // 2. Get 16-Day Daily Forecast
-      const dailyResponse = await fetch(
+      const dailyResponse = await this.authenticatedFetch(
         `${this.baseUrl}/api/weather/forecast/daily?lat=${lat}&lon=${lon}&cnt=16`
       );
       const dailyData = await dailyResponse.json();
 
       // 3. Get Hourly Forecast
-      const hourlyResponse = await fetch(
+      const hourlyResponse = await this.authenticatedFetch(
         `${this.baseUrl}/api/weather/forecast/hourly?lat=${lat}&lon=${lon}`
       );
       const hourlyData = await hourlyResponse.json();
 
-      return this.formatWeatherData(currentData, dailyData, hourlyData, cityName);
+      const weatherData = this.formatWeatherData(currentData, dailyData, hourlyData, cityName);
+      this.setCachedWeather(cacheKey, weatherData); // Cache by coordinates
+      return weatherData;
     } catch (error) {
       console.error('Failed to fetch weather data:', error);
       throw error;

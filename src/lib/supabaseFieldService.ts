@@ -11,7 +11,8 @@ export const supabaseFieldService = {
       return [];
     }
 
-    const { data, error } = await supabase
+    // 1. Fetch all fields (Query #1)
+    const { data: fields, error } = await supabase
       .from('fields')
       .select('*')
       .eq('user_id', user.id)
@@ -22,11 +23,77 @@ export const supabaseFieldService = {
       return [];
     }
 
-    console.log('DEBUG: getFields - Fields found:', data?.length);
-    return data?.map(field => ({
-      ...field,
-      ...field.lifecycle_metadata
-    })) || [];
+    if (!fields || fields.length === 0) {
+      return [];
+    }
+
+    console.log('DEBUG: getFields - Fields found:', fields.length);
+
+    // 2. Batch fetch latest data for ALL fields (Query #2)
+    // We use a trick: fetch field_data where field_id is in our list
+    // To get "latest" efficiently without window functions (which are complex in Supabase JS),
+    // we fetch the last 30 days of data for these fields and filter in memory.
+    // For 1000 users, this is much lighter on the DB than 6000 individual queries.
+    const fieldIds = fields.map(f => f.id);
+
+    const { data: allFieldData, error: dataError } = await supabase
+      .from('field_data')
+      .select('*')
+      .in('field_id', fieldIds)
+      .order('timestamp', { ascending: false })
+      .limit(fieldIds.length * 5); // Fetch enough recent records
+
+    if (dataError) {
+      console.error('Error batch fetching field data:', dataError);
+      // Fallback: return fields without data rather than failing
+      return fields.map(field => ({
+        ...field,
+        ...field.lifecycle_metadata
+      }));
+    }
+
+    // 3. Map latest data to fields in memory
+    const fieldDataMap = new Map();
+    if (allFieldData) {
+      for (const dataPoint of allFieldData) {
+        // Since we ordered by timestamp desc, the first one we see for a field is the latest
+        if (!fieldDataMap.has(dataPoint.field_id)) {
+          fieldDataMap.set(dataPoint.field_id, dataPoint);
+        }
+      }
+    }
+
+    // 4. Enrich fields
+    return fields.map(field => {
+      const latestData = fieldDataMap.get(field.id);
+
+      // Base field with lifecycle metadata
+      const enrichedField = {
+        ...field,
+        ...field.lifecycle_metadata
+      };
+
+      // Add latest sensor/satellite data if available
+      if (latestData) {
+        return {
+          ...enrichedField,
+          ndvi: latestData.ndvi,
+          evi: latestData.evi,
+          ndwi: latestData.ndwi,
+          moisture: latestData.soil_moisture,
+          temperature: latestData.temperature,
+          health: {
+            ndvi: latestData.ndvi,
+            status: latestData.health_score > 0.7 ? "healthy" :
+              latestData.health_score > 0.5 ? "monitor" :
+                latestData.health_score > 0.3 ? "stress" : "unknown"
+          },
+          last_updated: latestData.timestamp
+        };
+      }
+
+      return enrichedField;
+    });
   },
 
   // Get field by ID

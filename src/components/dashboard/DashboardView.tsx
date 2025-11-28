@@ -21,8 +21,11 @@ import { supabaseFieldService } from "@/lib/supabaseFieldService";
 import { migrateLocalStorageToSupabase, needsMigration } from "@/lib/migrateLocalStorageToSupabase";
 import { mandiPriceService } from "@/lib/mandiPriceService";
 
+import { DashboardSkeleton } from './DashboardSkeleton';
+
 export const DashboardView = () => {
   const { t } = useTranslation();
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [weatherData, setWeatherData] = useState<any>(null);
@@ -125,48 +128,16 @@ export const DashboardView = () => {
 
   const loadFieldsFromSupabase = async () => {
     try {
-      // Load fields from Supabase
+      // Load fields from Supabase (now optimized to include data)
       console.log('DEBUG: loadFieldsFromSupabase - Calling service');
       const fields = await supabaseFieldService.getFields();
       console.log('DEBUG: loadFieldsFromSupabase - Service returned:', fields.length);
 
-      // Enrich each field with latest field data
-      const enrichedFields = await Promise.all(
-        fields.map(async (field: any) => {
-          try {
-            const latestData = await supabaseFieldService.getLatestFieldData(field.id);
-            if (latestData) {
-              // Map Supabase field names to expected format
-              return {
-                ...field,
-                // Map crop_type to cropType
-                cropType: field.crop_type,
-                // Add satellite and soil data
-                ndvi: latestData.ndvi,
-                evi: latestData.evi,
-                ndwi: latestData.ndwi,
-                moisture: latestData.soil_moisture,
-                temperature: latestData.temperature,
-                health: {
-                  ndvi: latestData.ndvi,
-                  status: latestData.health_score > 0.7 ? "healthy" :
-                    latestData.health_score > 0.5 ? "monitor" :
-                      latestData.health_score > 0.3 ? "stress" : "unknown"
-                },
-                timestamp: latestData.timestamp
-              };
-            }
-          } catch (error) {
-            console.error(`Failed to load data for field ${field.id}:`, error);
-          }
-          return {
-            ...field,
-            cropType: field.crop_type
-          };
-        })
-      );
-
-      return enrichedFields;
+      // Map crop_type to cropType for frontend consistency if needed
+      return fields.map((field: any) => ({
+        ...field,
+        cropType: field.crop_type || field.cropType
+      }));
     } catch (error) {
       console.error("Failed to load fields from Supabase:", error);
       return [];
@@ -382,21 +353,8 @@ export const DashboardView = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-green-50/30 to-background">
-        <div className="text-center space-y-4 p-4 max-w-md">
-          {/* Skeleton Loading */}
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-            <div className="h-48 bg-gray-200 rounded"></div>
-          </div>
-          <p className="text-sm text-muted-foreground mt-4">{t("loading")}...</p>
-        </div>
+      <div className="p-4 md:p-6 pb-24 max-w-7xl mx-auto space-y-6">
+        <DashboardSkeleton />
       </div>
     );
   }
