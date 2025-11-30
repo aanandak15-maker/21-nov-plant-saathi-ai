@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
@@ -29,6 +30,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import CropRotation from "./pages/CropRotation";
 import { MandiPrices } from "./pages/MandiPrices";
 import BlogPage from "./pages/BlogPage";
+import BlogDetailPage from "./pages/BlogDetailPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import PrivacyPage from "./pages/PrivacyPage";
@@ -72,58 +74,61 @@ const App = () => {
 
   return (
     <LanguageProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/blog/:slug" element={<BlogDetailPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
-              {/* Protected routes */}
-              {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> */}
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-              {/* <Route path="/soilsaathi" element={<Suspense fallback={<div>Loading...</div>}><SoilSati /></Suspense>} /> */}
-              <Route path="/new-field" element={<ProtectedRoute><FieldMapping /></ProtectedRoute>} />
-              {/* Soil Saathi routes - more specific routes must come first */}
-              <Route path="/soilsaathi/field/:fieldId" element={<ProtectedRoute><FieldDetails /></ProtectedRoute>} />
-              <Route path="/soilsaathi/field-mobile/:fieldId" element={<ProtectedRoute><MobileOptimizedFieldDashboard /></ProtectedRoute>} />
-              <Route path="/soilsaathi/map-field" element={<ProtectedRoute><FieldMapping /></ProtectedRoute>} />
-              <Route path="/soilsaathi" element={<ProtectedRoute><SoilSati /></ProtectedRoute>} />
-              <Route path="/crop-rotation/:fieldId" element={<ProtectedRoute><CropRotation /></ProtectedRoute>} />
-              <Route path="/disease" element={<ProtectedRoute><DiseaseDetection /></ProtectedRoute>} />
-              <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
-              <Route path="/marketplace/product/:productId" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
-              <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-              <Route path="/schemes" element={<ProtectedRoute><Schemes /></ProtectedRoute>} />
-              <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
-              <Route path="/mandi-prices" element={<ProtectedRoute><MandiPrices /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/settings/ai" element={<ProtectedRoute><AISettingsPage /></ProtectedRoute>} />
-              <Route path="/test" element={<TestRunner />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* Protected routes */}
+                {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> */}
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+                {/* <Route path="/soilsaathi" element={<Suspense fallback={<div>Loading...</div>}><SoilSati /></Suspense>} /> */}
+                <Route path="/new-field" element={<ProtectedRoute><FieldMapping /></ProtectedRoute>} />
+                {/* Soil Saathi routes - more specific routes must come first */}
+                <Route path="/soilsaathi/field/:fieldId" element={<ProtectedRoute><FieldDetails /></ProtectedRoute>} />
+                <Route path="/soilsaathi/field-mobile/:fieldId" element={<ProtectedRoute><MobileOptimizedFieldDashboard /></ProtectedRoute>} />
+                <Route path="/soilsaathi/map-field" element={<ProtectedRoute><FieldMapping /></ProtectedRoute>} />
+                <Route path="/soilsaathi" element={<ProtectedRoute><SoilSati /></ProtectedRoute>} />
+                <Route path="/crop-rotation/:fieldId" element={<ProtectedRoute><CropRotation /></ProtectedRoute>} />
+                <Route path="/disease" element={<ProtectedRoute><DiseaseDetection /></ProtectedRoute>} />
+                <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+                <Route path="/marketplace/product/:productId" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+                <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                <Route path="/schemes" element={<ProtectedRoute><Schemes /></ProtectedRoute>} />
+                <Route path="/weather" element={<ProtectedRoute><Weather /></ProtectedRoute>} />
+                <Route path="/mandi-prices" element={<ProtectedRoute><MandiPrices /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/settings/ai" element={<ProtectedRoute><AISettingsPage /></ProtectedRoute>} />
+                <Route path="/test" element={<TestRunner />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
 
-            {/* AI Assistant Floating Action Button */}
-            <AIAdvisorFAB />
+              {/* AI Assistant Floating Action Button */}
+              <AIAdvisorFAB />
 
-            {/* PWA Components */}
-            {/* <PWAInstallPrompt /> */}
-            {/* <PWAUpdatePrompt /> */}
-            {/* <OfflineIndicator /> */}
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
+              {/* PWA Components */}
+              {/* <PWAInstallPrompt /> */}
+              {/* <PWAUpdatePrompt /> */}
+              {/* <OfflineIndicator /> */}
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </HelmetProvider>
     </LanguageProvider>
   );
 };
