@@ -6,8 +6,8 @@
 import { weatherService } from './weatherService';
 import { fieldDataCacheService } from './fieldDataCacheService';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyBIqwblxkOwuECpcg3inzzYz7NdC3KeLGI';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
+// API Key is managed via Backend Proxy or User Settings
+// No hardcoded keys in frontend code
 
 export interface UserContext {
   fields: FieldInfo[];
@@ -46,14 +46,15 @@ export class GeminiAIService {
   private conversationHistory: ChatMessage[] = [];
   private userContext: UserContext | null = null;
 
-  constructor(apiKey?: string) {
-    // Check localStorage first, then env variable
-    const storedKey = localStorage.getItem('gemini_api_key');
-    this.apiKey = apiKey || storedKey || GEMINI_API_KEY || '';
+  private proxyUrl: string;
 
-    if (!this.apiKey) {
-      console.warn('Gemini API key is missing. AI features will not work.');
-    }
+  constructor(apiKey?: string) {
+    // Check localStorage first
+    const storedKey = localStorage.getItem('gemini_api_key');
+    this.apiKey = apiKey || storedKey || '';
+
+    // Set proxy URL (same as weather service)
+    this.proxyUrl = import.meta.env.VITE_SATELLITE_PROXY_URL || 'http://localhost:3001';
 
     // Load history from localStorage
     try {
@@ -261,16 +262,6 @@ You: "Yellow leaves usually mean Nitrogen deficiency or over-watering.
    */
   async sendMessage(userMessage: string): Promise<string> {
     try {
-      // Check for API key in localStorage if not set
-      if (!this.apiKey) {
-        const storedKey = localStorage.getItem('gemini_api_key');
-        if (storedKey) {
-          this.apiKey = storedKey;
-        } else {
-          throw new Error('Gemini API key not configured. Please add your API key in Settings.');
-        }
-      }
-
       // Add user message to history
       this.conversationHistory.push({
         role: 'user',
@@ -293,40 +284,53 @@ You: "Yellow leaves usually mean Nitrogen deficiency or over-watering.
         })),
       ];
 
-      // Call Gemini API
-      const response = await fetch(`${GEMINI_API_URL}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
+      let response;
+
+      // DECISION: Use Direct API (if user provided key) OR Backend Proxy (default)
+      if (this.apiKey) {
+        // 1. Direct Client-Side Call (User's Own Key)
+        console.log('🤖 Using User-Provided API Key (Direct Call)');
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
+
+        response = await fetch(`${GEMINI_API_URL}?key=${this.apiKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          safetySettings: [
-            {
-              category: 'HARM_CATEGORY_HARASSMENT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-            {
-              category: 'HARM_CATEGORY_HATE_SPEECH',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-            {
-              category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-            {
-              category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-            },
-          ],
-        }),
-      });
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            }
+          }),
+        });
+
+      } else {
+        // 2. Backend Proxy Call (Secure System Key)
+        console.log('🛡️ Using Backend Proxy (Secure System Key)');
+
+        const backendApiKey = import.meta.env.VITE_BACKEND_API_KEY || '';
+
+        response = await fetch(`${this.proxyUrl}/api/ai/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': backendApiKey
+          },
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            }
+          }),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

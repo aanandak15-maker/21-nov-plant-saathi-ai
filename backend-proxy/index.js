@@ -457,6 +457,55 @@ app.get('/api/weather/forecast/hourly', async (req, res) => {
   }
 });
 
+// Gemini AI Proxy Endpoint
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Gemini API key not configured on server' });
+    }
+
+    const { contents, generationConfig } = req.body;
+
+    if (!contents) {
+      return res.status(400).json({ error: 'Missing contents in request body' });
+    }
+
+    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
+
+    console.log('🤖 Proxying request to Gemini AI...');
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents,
+        generationConfig: generationConfig || {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Gemini API error:', errorData);
+      return res.status(response.status).json(errorData);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Error proxying to Gemini:', error);
+    res.status(500).json({ error: 'Failed to communicate with AI service' });
+  }
+});
+
 // Start server
 // Start server
 const startServer = () => {
