@@ -467,13 +467,19 @@ const startServer = () => {
   });
 };
 
-initializeEE()
-  .then(() => {
-    console.log('✅ Earth Engine initialized');
-    startServer();
-  })
-  .catch((error) => {
-    console.warn('⚠️ Earth Engine initialization failed (Satellite data will be unavailable):', error.message);
-    console.log('ℹ️ Starting server anyway for Weather endpoints...');
-    startServer();
-  });
+// Start server if not running in Vercel/Serverless environment
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  initializeEE()
+    .then(() => {
+      console.log('✅ Earth Engine initialized');
+      startServer();
+    })
+    .catch((error) => {
+      console.warn('⚠️ Earth Engine initialization failed (Satellite data will be unavailable):', error.message);
+      console.log('ℹ️ Starting server anyway for Weather endpoints...');
+      startServer();
+    });
+}
+
+// Export for Vercel
+export default app;
