@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather API Direct Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .result {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+
+        .success {
+            border-left-color: #4CAF50;
+            background: #e8f5e9;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🌤️ Weather API Direct Test</h1>
+    <p>Testing the backend proxy weather endpoints at <code>http://localhost:3001</code></p>
+
+    <div class="test-section">
+        <h2>1. Test Current Weather (by City)</h2>
+        <input type="text" id="cityInput" placeholder="Enter city name" value="Delhi">
+        <input type="text" id="apiKey" placeholder="API Key (from .env)" value="">
+        <button onclick="testCurrentWeatherByCity()">Test Current Weather</button>
+        <div id="currentResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test Current Weather (by Coordinates)</h2>
+        <input type="text" id="lat" placeholder="Latitude" value="28.6139">
+        <input type="text" id="lon" placeholder="Longitude" value="77.2090">
+        <button onclick="testCurrentWeatherByCoords()">Test by Coords</button>
+        <div id="coordsResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test Daily Forecast (16-day)</h2>
+        <button onclick="testDailyForecast()">Test Daily Forecast</button>
+        <div id="dailyResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test Hourly Forecast</h2>
+        <button onclick="testHourlyForecast()">Test Hourly Forecast</button>
+        <div id="hourlyResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Test Full Weather Service (Frontend)</h2>
+        <button onclick="testFrontendWeatherService()">Test Frontend Weather Service</button>
+        <div id="frontendResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:3002';
+
+        function getHeaders() {
+            const apiKey = document.getElementById('apiKey').value;
+            return {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey || 'change-me-in-production' // Default from backend
+            };
+        }
+
+        async function testCurrentWeatherByCity() {
+            const city = document.getElementById('cityInput').value;
+            const resultDiv = document.getElementById('currentResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Loading...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/weather/current?city=${encodeURIComponent(city)}`, {
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ SUCCESS!\n\nLocation: ${data.name}, ${data.sys.country}\nTemperature: ${data.main.temp}°C\nFeels Like: ${data.main.feels_like}°C\nWeather: ${data.weather[0].description}\nHumidity: ${data.main.humidity}%\nWind Speed: ${data.wind.speed} m/s\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR:\n${error.message}`;
+            }
+        }
+
+        async function testCurrentWeatherByCoords() {
+            const lat = document.getElementById('lat').value;
+            const lon = document.getElementById('lon').value;
+            const resultDiv = document.getElementById('coordsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Loading...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`, {
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ SUCCESS!\n\nLocation: ${data.name}, ${data.sys.country}\nCoordinates: ${data.coord.lat}, ${data.coord.lon}\nTemperature: ${data.main.temp}°C\nWeather: ${data.weather[0].description}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR:\n${error.message}`;
+            }
+        }
+
+        async function testDailyForecast() {
+            const city = document.getElementById('cityInput').value;
+            const resultDiv = document.getElementById('dailyResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Loading...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/weather/forecast/daily?city=${encodeURIComponent(city)}&cnt=16`, {
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                let summary = `✅ SUCCESS!\n\nLocation: ${data.city.name}, ${data.city.country}\nForecast Days: ${data.list.length}\n\nFirst 3 Days:\n`;
+
+                data.list.slice(0, 3).forEach((day, i) => {
+                    const date = new Date(day.dt * 1000).toLocaleDateString();
+                    summary += `\n${i + 1}. ${date}\n   Temp: ${day.temp.day}°C (min: ${day.temp.min}°C, max: ${day.temp.max}°C)\n   Weather: ${day.weather[0].description}\n   Humidity: ${day.humidity}%\n   Rain Probability: ${Math.round((day.pop || 0) * 100)}%`;
+                });
+
+                summary += `\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.textContent = summary;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR:\n${error.message}`;
+            }
+        }
+
+        async function testHourlyForecast() {
+            const city = document.getElementById('cityInput').value;
+            const resultDiv = document.getElementById('hourlyResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Loading...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/weather/forecast/hourly?city=${encodeURIComponent(city)}`, {
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                let summary = `✅ SUCCESS!\n\nForecast Items: ${data.list.length}\n${data.isFallback ? '⚠️ Using fallback 3-hour forecast (hourly not available)\n' : ''}`;
+
+                summary += `\nFirst 3 Items:\n`;
+                data.list.slice(0, 3).forEach((item, i) => {
+                    const date = new Date(item.dt * 1000).toLocaleString();
+                    summary += `\n${i + 1}. ${date}\n   Temp: ${item.main.temp}°C\n   Weather: ${item.weather[0].description}\n   Rain Probability: ${Math.round((item.pop || 0) * 100)}%`;
+                });
+
+                summary += `\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.textContent = summary;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR:\n${error.message}`;
+            }
+        }
+
+        async function testFrontendWeatherService() {
+            const resultDiv = document.getElementById('frontendResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testing frontend weather service integration...';
+            resultDiv.className = 'result';
+
+            try {
+                // Simulate what the frontend weatherService.getWeatherByCity() does
+                const city = document.getElementById('cityInput').value;
+
+                // Step 1: Get current weather
+                const currentResponse = await fetch(`${BASE_URL}/api/weather/current?city=${encodeURIComponent(city)}`, {
+                    headers: getHeaders()
+                });
+
+                if (!currentResponse.ok) {
+                    throw new Error(`Current weather failed: ${currentResponse.status}`);
+                }
+
+                const currentData = await currentResponse.json();
+                const { lat, lon } = currentData.coord;
+
+                // Step 2: Get daily forecast
+                const dailyResponse = await fetch(`${BASE_URL}/api/weather/forecast/daily?lat=${lat}&lon=${lon}&cnt=16`, {
+                    headers: getHeaders()
+                });
+
+                if (!dailyResponse.ok) {
+                    throw new Error(`Daily forecast failed: ${dailyResponse.status}`);
+                }
+
+                const dailyData = await dailyResponse.json();
+
+                // Step 3: Get hourly forecast
+                const hourlyResponse = await fetch(`${BASE_URL}/api/weather/forecast/hourly?lat=${lat}&lon=${lon}`, {
+                    headers: getHeaders()
+                });
+
+                if (!hourlyResponse.ok) {
+                    throw new Error(`Hourly forecast failed: ${hourlyResponse.status}`);
+                }
+
+                const hourlyData = await hourlyResponse.json();
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ FULL INTEGRATION SUCCESS!\n\n` +
+                    `Location: ${currentData.name}, ${currentData.sys.country}\n` +
+                    `Current Temp: ${currentData.main.temp}°C\n` +
+                    `Daily Forecast Days: ${dailyData.list.length}\n` +
+                    `Hourly Forecast Items: ${hourlyData.list.length}\n` +
+                    `${hourlyData.isFallback ? '⚠️ Using fallback hourly data\n' : ''}\n\n` +
+                    `This is exactly what the frontend weatherService does!\n` +
+                    `The weather feature should work now! 🎉`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERROR:\n${error.message}\n\nCheck:\n1. Backend proxy running on port 3001?\n2. OPENWEATHER_API_KEY set in backend-proxy/.env?\n3. BACKEND_API_KEY matches between frontend and backend?`;
+            }
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            console.log('Weather API Test Page Loaded');
+            console.log('Backend Proxy URL:', BASE_URL);
+            console.log('Make sure backend-proxy is running: cd backend-proxy && npm run dev');
+        });
+    </script>
+</body>
+
+</html>

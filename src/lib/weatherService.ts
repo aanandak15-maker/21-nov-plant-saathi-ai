@@ -61,8 +61,8 @@ export class WeatherService {
   private apiKey: string;
 
   constructor() {
-    // Use the backend proxy URL (default to localhost:3001 if not set)
-    this.baseUrl = import.meta.env.VITE_SATELLITE_PROXY_URL || 'http://localhost:3001';
+    // Use the backend proxy URL (default to localhost:3002 if not set)
+    this.baseUrl = import.meta.env.VITE_SATELLITE_PROXY_URL || 'http://localhost:3002';
     this.apiKey = import.meta.env.VITE_BACKEND_API_KEY || '';
 
     if (!this.apiKey) {
