@@ -18,7 +18,17 @@ const PORT = process.env.PORT || 3001;
 const BACKEND_API_KEY = process.env.BACKEND_API_KEY || 'change-me-in-production';
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:8080',
+    'http://localhost:5173',
+    'https://plant-saathi-ai-nov27.vercel.app',
+    'https://plant-saathi-frontend.vercel.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-api-key']
+}));
 app.use(express.json());
 
 // Rate Limiting: Prevent API abuse
