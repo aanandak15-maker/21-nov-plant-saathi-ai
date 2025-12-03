@@ -118,5 +118,26 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  safelist: [
+    // Blog grid layout classes - dynamically applied
+    'md:col-span-1',
+    'md:col-span-2',
+    'md:col-span-3',
+    'md:col-span-5',
+    'md:col-span-7',
+    'md:col-span-12',
+    // Blog title text size classes - dynamically applied
+    'text-xl',
+    'text-2xl',
+    'md:text-3xl',
+    // Prose variants for blog content
+    {
+      pattern: /prose-(sm|lg|xl|2xl)/,
+      variants: ['sm', 'md', 'lg'],
+    },
+  ],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+  ],
 } satisfies Config;

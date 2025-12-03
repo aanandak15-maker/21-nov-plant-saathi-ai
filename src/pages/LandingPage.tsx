@@ -17,6 +17,7 @@ import {
 const LandingPage = () => {
     const navigate = useNavigate();
     const [counts, setCounts] = useState({ accuracy: 0 });
+    const [language, setLanguage] = useState<'en' | 'hi'>('en');
 
     useEffect(() => {
         const duration = 2000;
@@ -38,87 +39,111 @@ const LandingPage = () => {
     const features = [
         {
             icon: <Shield className="w-6 h-6" />,
-            title: "Disease Detection",
-            desc: "AI-powered crop disease identification",
-            status: "Live",
+            title: language === 'hi' ? "बेहतर खेती के फैसले" : "Improve Farm Decisions",
+            titleEn: "Improve Farm Decisions",
+            titleHi: "बेहतर खेती के फैसले",
+            desc: language === 'hi' ? "फसल स्वास्थ्य, मिट्टी, इनपुट और मौसम पर स्पष्ट मार्गदर्शन" : "Get clear guidance on crop health, soil condition, inputs, and weather — so every action is timely and informed.",
+            status: language === 'hi' ? "लाइव" : "Live",
             statusColor: "bg-green-600"
         },
         {
-            icon: <Leaf className="w-6 h-6" />,
-            title: "Soil Health (NDVI)",
-            desc: "Satellite-based field monitoring",
-            status: "Beta",
-            statusColor: "bg-blue-600"
-        },
-        {
-            icon: <TrendingUp className="w-6 h-6" />,
-            title: "Mandi Prices",
-            desc: "Real-time market data",
-            status: "Live",
+            icon: <Target className="w-6 h-6" />,
+            title: language === 'hi' ? "बर्बादी और खर्च कम करें" : "Reduce Wastage & Overspending",
+            titleEn: "Reduce Wastage & Overspending",
+            titleHi: "बर्बादी और खर्च कम करें",
+            desc: language === 'hi' ? "लक्षित स्प्रे योजना और सटीक इनपुट सिफारिशें" : "Use targeted spray plans and precise input recommendations to avoid unnecessary chemical and fertilizer use.",
+            status: language === 'hi' ? "लाइव" : "Live",
             statusColor: "bg-green-600"
         },
         {
             icon: <CloudSun className="w-6 h-6" />,
-            title: "Weather Intelligence",
-            desc: "Hyperlocal forecasts & alerts",
-            status: "Live",
+            title: language === 'hi' ? "जोखिम जल्दी पहचानें" : "Predict Risks Early",
+            titleEn: "Predict Risks Early",
+            titleHi: "जोखिम जल्दी पहचानें",
+            desc: language === 'hi' ? "तनाव, मौसम बदलाव और सिंचाई की जरूरतों के लिए अलर्ट" : "Receive alerts for stress, weather shifts, and irrigation needs so you can act before damage happens.",
+            status: language === 'hi' ? "लाइव" : "Live",
             statusColor: "bg-green-600"
         },
         {
-            icon: <Sprout className="w-6 h-6" />,
-            title: "Crop Rotation",
-            desc: "Smart rotation recommendations",
-            status: "Beta",
-            statusColor: "bg-blue-600"
-        },
-        {
-            icon: <Brain className="w-6 h-6" />,
-            title: "AI Assistant",
-            desc: "24/7 farming advice chatbot",
-            status: "Beta",
-            statusColor: "bg-blue-600"
-        },
-        {
-            icon: <Droplets className="w-6 h-6" />,
-            title: "Jal Saathi",
-            desc: "Irrigation scheduling",
-            status: "Beta",
-            statusColor: "bg-blue-600"
-        },
-        {
-            icon: <MapPin className="w-6 h-6" />,
-            title: "Field Tracking",
-            desc: "Complete field lifecycle",
-            status: "Pilot",
-            statusColor: "bg-purple-600"
-        },
-        {
-            icon: <GraduationCap className="w-6 h-6" />,
-            title: "Education Hub",
-            desc: "Video tutorials & guides",
-            status: "Live",
+            icon: <TrendingUp className="w-6 h-6" />,
+            title: language === 'hi' ? "स्मार्ट बिक्री" : "Sell Smart, Not Blind",
+            titleEn: "Sell Smart, Not Blind",
+            titleHi: "स्मार्ट बिक्री",
+            desc: language === 'hi' ? "मंडी भाव जानकारी से बेहतर रिटर्न पाएं" : "Use mandi price insights to decide where and when to sell for better returns.",
+            status: language === 'hi' ? "लाइव" : "Live",
             statusColor: "bg-green-600"
         },
         {
             icon: <Zap className="w-6 h-6" />,
-            title: "Offline Mode",
-            desc: "Works without internet (PWA)",
-            status: "Live",
+            title: language === 'hi' ? "कहीं भी काम करे — ऑफलाइन भी" : "Works Anywhere — Even Offline",
+            titleEn: "Works Anywhere — Even Offline",
+            titleHi: "कहीं भी काम करे — ऑफलाइन भी",
+            desc: language === 'hi' ? "खेत में हों या गाँव में, बिना इंटरनेट भी काम करता है" : "Whether in the field or village, Plant Saathi AI works without strong internet and supports local languages.",
+            status: language === 'hi' ? "लाइव" : "Live",
+            statusColor: "bg-green-600"
+        },
+        {
+            icon: <Users className="w-6 h-6" />,
+            title: language === 'hi' ? "FPO के लिए बनाया गया" : "Built for FPOs",
+            titleEn: "Built for FPOs",
+            titleHi: "FPO के लिए बनाया गया",
+            desc: language === 'hi' ? "सभी सदस्यों के लिए मानकीकृत सलाह और सामुदायिक प्रभाव" : "Standardized advisory for all members with community-scale impact across hundreds of farmers at once.",
+            status: language === 'hi' ? "लाइव" : "Live",
+            statusColor: "bg-green-600"
+        },
+        {
+            icon: <Leaf className="w-6 h-6" />,
+            title: language === 'hi' ? "जमीन की सेहत" : "Soil Health",
+            titleEn: "Soil Health",
+            titleHi: "जमीन की सेहत",
+            desc: language === 'hi' ? "फसल की सेहत का हाल, मुफ्त में" : "Crop health status, completely free",
+            status: language === 'hi' ? "बीटा" : "Beta",
+            statusColor: "bg-blue-600"
+        },
+        {
+            icon: <Brain className="w-6 h-6" />,
+            title: language === 'hi' ? "24/7 सलाह" : "AI Assistant",
+            titleEn: "AI Assistant",
+            titleHi: "24/7 सलाह",
+            desc: language === 'hi' ? "कब स्प्रे करना है, तुरंत जवाब" : "Get instant farming advice anytime",
+            status: language === 'hi' ? "बीटा" : "Beta",
+            statusColor: "bg-blue-600"
+        },
+        {
+            icon: <Droplets className="w-6 h-6" />,
+            title: language === 'hi' ? "सिंचाई सलाह" : "Irrigation Guide",
+            titleEn: "Jal Saathi",
+            titleHi: "सिंचाई सलाह",
+            desc: language === 'hi' ? "पानी बचाओ, खर्च कम करो" : "Save water, reduce irrigation costs",
+            status: language === 'hi' ? "बीटा" : "Beta",
+            statusColor: "bg-blue-600"
+        },
+        {
+            icon: <MapPin className="w-6 h-6" />,
+            title: language === 'hi' ? "खेत ट्रैकिंग" : "Field Tracking",
+            titleEn: "Field Tracking",
+            titleHi: "खेत ट्रैकिंग",
+            desc: language === 'hi' ? "सभी खेतों का हिसाब एक जगह" : "Manage all your fields in one place",
+            status: language === 'hi' ? "पायलट" : "Pilot",
+            statusColor: "bg-purple-600"
+        },
+        {
+            icon: <GraduationCap className="w-6 h-6" />,
+            title: language === 'hi' ? "वीडियो सीखो" : "Learn with Videos",
+            titleEn: "Education Hub",
+            titleHi: "वीडियो सीखो",
+            desc: language === 'hi' ? "आसान भाषा में खेती सीखो" : "Learn farming in simple language",
+            status: language === 'hi' ? "लाइव" : "Live",
             statusColor: "bg-green-600"
         },
         {
             icon: <ShoppingCart className="w-6 h-6" />,
-            title: "Smart Marketplace",
-            desc: "Input supplier connections",
-            status: "Coming Soon",
+            title: language === 'hi' ? "खाद-बीज खरीदो" : "Buy Inputs",
+            titleEn: "Smart Marketplace",
+            titleHi: "खाद-बीज खरीदो",
+            desc: language === 'hi' ? "सही कीमत पर खाद-बीज मिलेगा" : "Get fertilizers and seeds at fair prices",
+            status: language === 'hi' ? "जल्द आएगा" : "Coming Soon",
             statusColor: "bg-gray-600"
-        },
-        {
-            icon: <BarChart3 className="w-6 h-6" />,
-            title: "FPO Analytics",
-            desc: "Farm-level insights dashboard",
-            status: "FPO Only",
-            statusColor: "bg-orange-600"
         }
     ];
 
@@ -176,25 +201,31 @@ const LandingPage = () => {
 
     const testimonials = [
         {
-            name: "Pilot Participant",
-            role: "Tomato Farmer, Eastern India",
-            text: "PlantSaathi's disease scan reduced visible leaf damage in my tomato plot — estimated loss down ≈18% in 2 weeks.",
+            name: language === 'hi' ? "बुलंदशहर का किसान" : "Farmer from Bulandshahr",
+            role: language === 'hi' ? "टमाटर की खेती, उत्तर प्रदेश" : "Tomato Farmer, Uttar Pradesh",
+            text: language === 'hi'
+                ? "मैंने फोटो लिया और तुरंत रोग बता दिया। इसने गलत स्प्रे से बचाया। 2 हफ्ते में नुकसान 18% कम हुआ।"
+                : "I took a photo and it instantly identified the disease. Saved me from using wrong pesticide. Crop loss reduced by ~18% in 2 weeks.",
             rating: 5,
-            impact: "~18% loss reduction"
+            impact: language === 'hi' ? "~18% नुकसान कम" : "~18% loss reduced"
         },
         {
-            name: "Pilot Participant",
-            role: "Rice Farmer, Bihar",
-            text: "SoilSaathi report helped me adjust NPK timing; I saw healthier tillers in rice — early pilot result.",
+            name: language === 'hi' ? "बिहार का धान किसान" : "Rice Farmer from Bihar",
+            role: language === 'hi' ? "धान की खेती, बिहार" : "Rice Farmer, Bihar",
+            text: language === 'hi'
+                ? "मिट्टी की रिपोर्ट से NPK का सही समय पता चला। धान की बाली अच्छी हुई।"
+                : "Soil report helped me time NPK application correctly. Rice tillers became healthier.",
             rating: 5,
-            impact: "Healthier crop"
+            impact: language === 'hi' ? "स्वस्थ फसल" : "Healthier crop"
         },
         {
-            name: "Pilot Participant",
-            role: "Mixed Vegetables, North India",
-            text: "Quick scan and clear advice saved a week of guesswork during pest outbreak.",
+            name: language === 'hi' ? "उत्तर भारत का सब्जी किसान" : "Vegetable Farmer, North India",
+            role: language === 'hi' ? "मिश्रित सब्जी, उत्तर भारत" : "Mixed Vegetables, North India",
+            text: language === 'hi'
+                ? "कीट फैलने पर तुरंत स्कैन किया। एक हफ्ते की भटकन बच गई।"
+                : "Quick scan during pest outbreak saved a week of confusion. Clear advice helped.",
             rating: 5,
-            impact: "Week saved"
+            impact: language === 'hi' ? "समय बचा" : "Time saved"
         },
     ];
 
@@ -276,13 +307,20 @@ const LandingPage = () => {
                         Plant Saathi AI
                     </div>
                     <div className="hidden md:flex gap-8 items-center">
-                        <a href="#features" className="text-gray-600 hover:text-green-700 font-medium">Features</a>
-                        <a href="#pricing" className="text-gray-600 hover:text-green-700 font-medium">Pricing</a>
-                        <span onClick={() => navigate('/blog')} className="text-gray-600 hover:text-green-700 font-medium cursor-pointer">Blog</span>
-                        <span onClick={() => navigate('/about')} className="text-gray-600 hover:text-green-700 font-medium cursor-pointer">About</span>
-                        <Button variant="ghost" onClick={() => navigate('/auth')}>Sign In</Button>
+                        <a href="#features" className="text-gray-600 hover:text-green-700 font-medium">{language === 'hi' ? 'फीचर्स' : 'Features'}</a>
+                        <a href="#pricing" className="text-gray-600 hover:text-green-700 font-medium">{language === 'hi' ? 'मूल्य' : 'Pricing'}</a>
+                        <span onClick={() => navigate('/blog')} className="text-gray-600 hover:text-green-700 font-medium cursor-pointer">{language === 'hi' ? 'ब्लॉग' : 'Blog'}</span>
+                        <span onClick={() => navigate('/about')} className="text-gray-600 hover:text-green-700 font-medium cursor-pointer">{language === 'hi' ? 'हमारे बारे में' : 'About'}</span>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+                            className="flex items-center gap-2"
+                        >
+                            🌐 {language === 'en' ? 'हिंदी' : 'English'}
+                        </Button>
+                        <Button variant="ghost" onClick={() => navigate('/auth')}>{language === 'hi' ? 'साइन इन' : 'Sign In'}</Button>
                         <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => navigate('/auth')}>
-                            Try Free
+                            {language === 'hi' ? 'Free में शुरू करें' : 'Try Free'}
                         </Button>
                     </div>
                 </div>
@@ -297,17 +335,35 @@ const LandingPage = () => {
                         transition={{ duration: 0.6 }}
                     >
                         <div className="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
-                            🌱 University Pilot in Progress
+                            {language === 'hi' ? '🚀 University Pilot Active' : '🚀 University Pilot Active'}
                         </div>
                         <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-                            Practical AI for <span className="text-green-600">Smallholder Farming</span>
+                            {language === 'hi' ? (
+                                <>
+                                    छोटे किसानों के लिए <span className="text-green-600">आसान AI मदद</span>
+                                </>
+                            ) : (
+                                <>
+                                    Turn Farming Decisions from <span className="text-orange-600">Guesswork</span> to <span className="text-green-600">Clarity</span>
+                                </>
+                            )}
                         </h1>
                         <p className="text-xl text-gray-600 mb-8">
-                            Quick disease scans on mobile. Satellite-backed soil health. Pilot-validated agronomy — made for small farms.
+                            {language === 'hi' ? (
+                                <>
+                                    बस फोटो लो — रोग का नाम और उपाय तुरंत पाओ। जमीन की सेहत की रिपोर्ट भी फोन पे।
+                                    <br />
+                                    <span className="text-lg mt-2 block text-green-700 font-semibold">University द्वारा टेस्ट किया हुआ (85%+ सटीकता)</span>
+                                </>
+                            ) : (
+                                <>
+                                    Data-backed insights that help farmers grow better, spend smarter, and sell at the right time. Even in <strong>low network, low literacy</strong> regions.
+                                </>
+                            )}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 mb-8">
                             <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white text-lg px-8 py-6" onClick={() => navigate('/auth')}>
-                                Try Free Forever <ArrowRight className="ml-2 w-5 h-5" />
+                                {language === 'hi' ? 'Free में शुरू करें' : 'Try Free Forever'} <ArrowRight className="ml-2 w-5 h-5" />
                             </Button>
                             <Button
                                 size="lg"
@@ -315,17 +371,17 @@ const LandingPage = () => {
                                 className="text-lg px-8 py-6 border-2 border-green-600 text-green-700 hover:bg-green-50"
                                 onClick={() => window.open('https://www.youtube.com/@plantsaathiai', '_blank')}
                             >
-                                <Play className="mr-2 w-5 h-5" /> Watch Demo
+                                <Play className="mr-2 w-5 h-5" /> {language === 'hi' ? 'Demo देखें' : 'Watch Demo'}
                             </Button>
                         </div>
                         <div className="flex items-center gap-6 text-sm text-gray-500">
                             <div className="flex items-center gap-2">
                                 <Check className="w-5 h-5 text-green-600" />
-                                Forever free plan
+                                {language === 'hi' ? 'हमेशा के लिए Free प्लान' : 'Forever free plan'}
                             </div>
                             <div className="flex items-center gap-2">
                                 <Check className="w-5 h-5 text-green-600" />
-                                No credit card needed
+                                {language === 'hi' ? 'कोई क्रेडिट कार्ड नहीं चाहिए' : 'No credit card needed'}
                             </div>
                         </div>
                     </motion.div>
@@ -343,15 +399,198 @@ const LandingPage = () => {
                                 className="w-full h-auto rounded-xl"
                             />
                         </div>
-                        <div className="absolute -top-4 -left-4 bg-white p-4 rounded-lg shadow-lg">
-                            <div className="text-3xl font-bold text-green-600">{counts.accuracy}%+</div>
-                            <div className="text-sm text-gray-600">Pilot Accuracy</div>
-                        </div>
-                        <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-lg shadow-lg">
-                            <div className="text-3xl font-bold text-blue-600">₹199</div>
-                            <div className="text-sm text-gray-600">Pro Plan/Month</div>
-                        </div>
+
                     </motion.div>
+                </div>
+            </section>
+
+            {/* USP Tagline */}
+            <section className="bg-gradient-to-r from-green-600 to-green-700 py-8 border-b border-gray-100">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <p className="text-2xl md:text-3xl font-bold text-white">
+                        {language === 'hi' ? (
+                            <>समस्या से समाधान तक—<span className="text-green-100">बिना ऐप बदले।</span></>
+                        ) : (
+                            <>From problem to action—<span className="text-green-100">without switching apps.</span></>
+                        )}
+                    </p>
+                </div>
+            </section>
+
+            {/* How It Works - 3 Simple Steps */}
+            <section className="py-16 bg-gradient-to-br from-green-50 to-blue-50">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                            {language === 'hi' ? 'कैसे काम करता है?' : 'How It Works'}
+                        </h2>
+                        <p className="text-xl text-gray-600">
+                            {language === 'hi' ? 'तीन-चरण निर्णय श्रृंखला' : 'Three-step decision chain'}
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* Step 1 */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="bg-white rounded-2xl p-8 text-center border-4 border-green-200 shadow-lg"
+                        >
+                            <div className="text-6xl mb-4">🔍</div>
+                            <div className="text-5xl font-bold text-green-600 mb-4">
+                                {language === 'hi' ? '१' : '1'}
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                {language === 'hi' ? 'अपनी फसल को स्कैन करें' : 'Scan Your Crop'}
+                            </h3>
+                            <p className="text-gray-600">
+                                {language === 'hi'
+                                    ? 'AI समस्या या तनाव की पहचान करता है'
+                                    : 'AI identifies the issue or stress'}
+                            </p>
+                        </motion.div>
+
+                        {/* Step 2 */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-white rounded-2xl p-8 text-center border-4 border-blue-200 shadow-lg"
+                        >
+                            <div className="text-6xl mb-4">📋</div>
+                            <div className="text-5xl font-bold text-blue-600 mb-4">
+                                {language === 'hi' ? '२' : '2'}
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                {language === 'hi' ? 'स्पष्ट कार्रवाई कदम प्राप्त करें' : 'Get Clear Action Steps'}
+                            </h3>
+                            <p className="text-gray-600">
+                                {language === 'hi'
+                                    ? 'खुराक, समय और मौसम के अनुसार सलाह'
+                                    : 'Dosages, timing, and weather-aligned advisory'}
+                            </p>
+                        </motion.div>
+
+                        {/* Step 3 */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-white rounded-2xl p-8 text-center border-4 border-green-200 shadow-lg"
+                        >
+                            <div className="text-6xl mb-4">📊</div>
+                            <div className="text-5xl font-bold text-green-600 mb-4">
+                                {language === 'hi' ? '३' : '3'}
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                {language === 'hi' ? 'अपने खेत को ट्रैक करें' : 'Track Your Field'}
+                            </h3>
+                            <p className="text-gray-600">
+                                {language === 'hi'
+                                    ? 'रिकवरी, मिट्टी स्वास्थ्य और आगामी जोखिम की निगरानी करें'
+                                    : 'Monitor recovery, soil health, and upcoming risks'}
+                            </p>
+                        </motion.div>
+                    </div>
+
+                    <div className="text-center mt-8">
+                        <p className="text-lg text-gray-600">
+                            {language === 'hi'
+                                ? '⚡ निरंतर निर्णय सहायता, सिर्फ एक बार का निदान नहीं'
+                                : '⚡ Continuous decision support, not just one-off diagnosis'}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Supported Crops */}
+            <section className="py-16 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                            {language === 'hi' ? 'आपकी फसल के लिए बनाया गया' : 'Built for Your Crops'}
+                        </h2>
+                        <p className="text-xl text-gray-600">
+                            {language === 'hi'
+                                ? '20+ फसलों के लिए समर्थन'
+                                : 'Supporting 20+ major Indian crops'}
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+                        {[
+                            { icon: '🌾', nameHi: 'गेहूँ', nameEn: 'Wheat' },
+                            { icon: '🌽', nameHi: 'मक्का', nameEn: 'Maize' },
+                            { icon: '🥔', nameHi: 'आलू', nameEn: 'Potato' },
+                            { icon: '🫘', nameHi: 'दालें', nameEn: 'Pulses' },
+                            { icon: '🌶️', nameHi: 'मिर्च', nameEn: 'Chilli' },
+                            { icon: '🍅', nameHi: 'टमाटर', nameEn: 'Tomato' }
+                        ].map((crop, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.05 }}
+                                className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 text-center hover:shadow-lg transition-all border-2 border-gray-100 hover:border-green-300"
+                            >
+                                <div className="text-5xl mb-3">{crop.icon}</div>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {language === 'hi' ? crop.nameHi : crop.nameEn}
+                                </p>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    <div className="text-center mt-8">
+                        <p className="text-gray-600">
+                            {language === 'hi'
+                                ? 'और भी बहुत सारी फसलें: धान, कपास, गन्ना, सोयाबीन, प्याज...'
+                                : 'And many more: Rice, Cotton, Sugarcane, Soybean, Onion...'}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Our Approach */}
+            <section className="py-16 bg-gradient-to-br from-green-50 to-blue-50">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                            {language === 'hi' ? 'हमारा तरीका' : 'Our Approach'}
+                        </h2>
+                        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                            {language === 'hi'
+                                ? 'सभी कृषि जानकारी को एक निरंतर निर्णय प्रणाली में जोड़ना — छोटे किसानों के लिए बनाया गया।'
+                                : 'Connecting all farm information into one continuous decision system — built for smallholders.'}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Why It Matters */}
+            <section className="py-16 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                            {language === 'hi' ? 'यह क्यों मायने रखता है' : 'Why It Matters'}
+                        </h2>
+                    </div>
+                    <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-12 text-center shadow-2xl max-w-4xl mx-auto">
+                        <p className="text-2xl md:text-3xl text-white font-bold mb-4 leading-relaxed">
+                            {language === 'hi'
+                                ? 'अधिकांश किसान अनुमान पर काम करते हैं।'
+                                : 'Most farmers operate on guesswork.'}
+                        </p>
+                        <p className="text-xl md:text-2xl text-green-100 leading-relaxed">
+                            {language === 'hi'
+                                ? 'Plant Saathi AI उन्हें स्पष्टता देता है — खेतों को अनुमानित, प्रबंधनीय व्यवसायों में बदलता है।'
+                                : 'Plant Saathi AI gives them clarity — turning farms into predictable, manageable businesses.'}
+                        </p>
+                    </div>
                 </div>
             </section>
 
@@ -377,8 +616,8 @@ const LandingPage = () => {
             <section id="features" className="py-20 bg-gray-50">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold text-gray-900 mb-4">Complete Farming Suite</h2>
-                        <p className="text-xl text-gray-600">Tools designed for Indian smallholder farmers</p>
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">Smarter Decisions. Lower Costs. Better Outcomes.</h2>
+                        <p className="text-xl text-gray-600">What we solve for farmers and FPOs</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
@@ -403,6 +642,15 @@ const LandingPage = () => {
                                 <p className="text-gray-600">{f.desc}</p>
                             </motion.div>
                         ))}
+                    </div>
+
+                    {/* Moat Statement */}
+                    <div className="mt-12 bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-8 text-center shadow-xl max-w-4xl mx-auto">
+                        <p className="text-xl md:text-2xl text-white font-bold leading-relaxed">
+                            {language === 'hi'
+                                ? 'Plant Saathi को क्या अलग बनाता है: हर सुविधा एक साथ काम करती है — एक प्रवाह, कई ऐप नहीं।'
+                                : 'What makes Plant Saathi different: every feature works together — one flow, not many apps.'}
+                        </p>
                     </div>
                 </div>
             </section>

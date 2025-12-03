@@ -474,7 +474,7 @@ User Input → React Components → Service Layer → External APIs/Supabase
 
 ```env
 # Gemini AI
-VITE_GEMINI_API_KEY=AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ ✅
+VITE_GEMINI_API_KEY=AIzaSyBmE26lEC7izfY_ERA1wBXpxBVKUFwF7pQ ✅
 
 # Supabase
 VITE_SUPABASE_URL=https://oislgcwardyvphznqoku.supabase.co ✅

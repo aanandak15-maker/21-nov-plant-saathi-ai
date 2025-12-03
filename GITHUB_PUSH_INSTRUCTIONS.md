@@ -114,7 +114,7 @@ ls -lh dist/
 ## 🌐 Environment Variables
 Make sure to set these in your deployment platform:
 ```
-VITE_GEMINI_API_KEY=AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ
+VITE_GEMINI_API_KEY=AIzaSyBmE26lEC7izfY_ERA1wBXpxBVKUFwF7pQ
 ```
 
 ## 📱 Test Locally

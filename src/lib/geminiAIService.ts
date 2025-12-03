@@ -6,7 +6,7 @@
 import { weatherService } from './weatherService';
 import { fieldDataCacheService } from './fieldDataCacheService';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyBIqwblxkOwuECpcg3inzzYz7NdC3KeLGI';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
 
 export interface UserContext {

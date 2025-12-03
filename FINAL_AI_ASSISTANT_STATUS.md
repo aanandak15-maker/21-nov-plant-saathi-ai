@@ -8,7 +8,7 @@ The intelligent AI assistant is **fully configured** with your provided Gemini A
 
 ### Default Shared Key (Pre-configured)
 ```typescript
-const GEMINI_API_KEY = 'AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ';
+const GEMINI_API_KEY = 'AIzaSyBmE26lEC7izfY_ERA1wBXpxBVKUFwF7pQ';
 ```
 
 **Location:** `src/lib/geminiAIService.ts`
@@ -37,7 +37,7 @@ This ensures:
 
 ### Core Service
 - **src/lib/geminiAIService.ts**
-  - Added default API key: `AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ`
+  - Added default API key: `AIzaSyBmE26lEC7izfY_ERA1wBXpxBVKUFwF7pQ`
   - Works immediately without configuration
 
 ### Settings UI
@@ -79,7 +79,7 @@ This ensures:
 2. Service checks for API key:
    - localStorage: empty
    - Environment: empty
-   - Default: `AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ` ✅
+   - Default: `AIzaSyBmE26lEC7izfY_ERA1wBXpxBVKUFwF7pQ` ✅
 3. Uses default key
 4. Works immediately!
 
@@ -348,7 +348,7 @@ A: Yes, in all supported languages.
 
 **Status:** ✅ **PRODUCTION READY - NO SETUP REQUIRED**
 
-**API Key:** `AIzaSyCjjaEuaQMiQxgkUQLlZmGfZEOxRonx9vQ` (Pre-configured)
+**API Key:** `AIzaSyBmE26lEC7izfY_ERA1wBXpxBVKUFwF7pQ` (Pre-configured)
 
 **User Experience:** **PERFECT** - Works immediately! ⚡
 
