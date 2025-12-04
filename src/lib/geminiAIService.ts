@@ -51,7 +51,7 @@ export class GeminiAIService {
   constructor(apiKey?: string) {
     // Check localStorage first
     const storedKey = localStorage.getItem('gemini_api_key');
-    this.apiKey = apiKey || storedKey || '';
+    this.apiKey = apiKey || storedKey || import.meta.env.VITE_GEMINI_API_KEY || '';
 
     // Set proxy URL (same as weather service)
     this.proxyUrl = import.meta.env.VITE_SATELLITE_PROXY_URL || 'http://localhost:3001';
